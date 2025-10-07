@@ -28,17 +28,14 @@ def load_seed():
 
 @app.post("/search", response_model=MeiliResponse)
 def search(q: SearchQuery):
-    body = {
-        "q": q.q,
-        "filter": q.filter,
-        "facets": q.facets,
-        "sort": q.sort,
-        "page": q.page,
-        "hitsPerPage": q.hitsPerPage,
-        "attributesToHighlight": q.attributesToHighlight
-    }
-    if q.hybrid:
-        body["hybrid"] = q.hybrid
+    body = {"q": q.q}
+    if q.filter: body["filter"] = q.filter
+    if q.facets: body["facets"] = q.facets
+    if q.sort: body["sort"] = q.sort
+    if q.page: body["page"] = q.page
+    if q.hitsPerPage: body["hitsPerPage"] = q.hitsPerPage
+    if q.attributesToHighlight: body["attributesToHighlight"] = q.attributesToHighlight
+    if q.hybrid: body["hybrid"] = q.hybrid
     return meili.search(body)
 
 @app.get("/similar/{doc_id}", response_model=MeiliResponse)
@@ -46,8 +43,8 @@ def similar(doc_id: str):
     doc = meili.get_document(doc_id)
     if not doc:
         raise HTTPException(404, "document not found")
-    query = f"{doc.get('title', '')} {doc.get('text', '')}"
-    body = {"q": query, "filter": None, "hitsPerPage": 20}
+    query = f"{doc.get('title', '')} {doc.get('text', '')}".strip()
+    body = {"q": query, "hitsPerPage": 20}
     return meili.search(body)
 
 @app.get("/stats")
