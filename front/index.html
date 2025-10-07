@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>MeiliTrends – Minimal</title>
+<style>
+body{font-family:system-ui,Arial;margin:2rem;max-width:920px}
+header{display:flex;gap:.5rem;align-items:center}
+input,select,button{padding:.5rem;border:1px solid #ddd;border-radius:.5rem}
+ul{list-style:none;padding:0;margin-top:1rem;display:grid;gap:.75rem}
+li{border:1px solid #eee;padding:.75rem;border-radius:.75rem}
+.badge{font-size:.8rem;opacity:.7;margin-right:.4rem}
+.facets{margin:.75rem 0;display:flex;gap:.5rem;flex-wrap:wrap}
+small{opacity:.6}
+</style>
+<header>
+  <input id="q" placeholder="search trends…">
+  <select id="source">
+    <option value="">all</option>
+    <option value="tiktok">tiktok</option>
+    <option value="instagram">instagram</option>
+  </select>
+  <button id="go">Search</button>
+</header>
+<div class="facets" id="facets"></div>
+<ul id="results"></ul>
+<script>
+const API="http://localhost:8000";
+const q=document.getElementById("q");
+const source=document.getElementById("source");
+const go=document.getElementById("go");
+const res=document.getElementById("results");
+const facetsDiv=document.getElementById("facets");
+async function search() {
+  const filter = source.value ? `source = ${source.value}` : null;
+  const body = { q: q.value||"", filter, facets:["source","lang","hashtags"], hitsPerPage:20, sort:["likes:desc","date:desc"] };
+  const r = await fetch(API+"/search",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+  const j = await r.json();
+  res.innerHTML = "";
+  (j.hits||[]).forEach(h=>{
+    const li=document.createElement("li");
+    li.innerHTML = `<b>${h.title||"(no title)"}</b> <span class="badge">❤ ${h.likes||0}</span><span class="badge">👀 ${h.views||0}</span>
+    <div>${(h.text||"").slice(0,160)}${(h.text||"").length>160?"…":""}</div>
+    <small>${h.source||""} · ${h.lang||""} · ${(h.hashtags||[]).map(x=>"#"+x).join(" ")}</small>`;
+    res.appendChild(li);
+  });
+  const f = j.facetDistribution||{};
+  facetsDiv.innerHTML = Object.entries(f).map(([k,v])=>{
+    const pills = Object.entries(v).map(([val,count])=>`<span class="badge">${k}:${val} (${count})</span>`).join(" ");
+    return `<div>${pills}</div>`;
+  }).join("");
+}
+go.onclick=search;
+q.addEventListener("keydown",e=>{ if(e.key==="Enter") search(); });
+search();
+</script>

@@ -1,0 +1,39 @@
+services:
+  meilisearch:
+    image: getmeili/meilisearch:v1.12
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-master_key}
+    ports:
+      - "7700:7700"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:7700/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+    env_file: .env
+    depends_on:
+      meilisearch:
+        condition: service_healthy
+    ports:
+      - "${API_PORT:-8000}:8000"
+    volumes:
+      - ./data:/app/data:ro
+
+  worker:
+    build:
+      context: ./worker
+      dockerfile: Dockerfile
+    env_file: .env
+    depends_on:
+      meilisearch:
+        condition: service_healthy
+      api:
+        condition: service_started
+    volumes:
+      - ./data:/app/data:ro
+    command: ["python", "worker.py", "--run-once"]
