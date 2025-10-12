@@ -1,0 +1,75 @@
+from pydantic import BaseModel, Field
+from typing import List, Any, Optional, Literal
+from datetime import datetime, timezone
+import math
+import re
+
+HASHTAG_RE = re.compile(r"#(\w+)")
+
+def extract_hashtags(caption: Optional[str]) -> List[str]:
+    if not caption:
+        return []
+    return list({m.group(1).lower() for m in HASHTAG_RE.finditer(caption)})
+
+def recency_decay(ts: datetime, tau_hours: int = 24) -> float:
+    if ts.tzinfo is None:
+        ts = ts.replace(tzinfo=timezone.utc)
+    dt_hours = (datetime.now(timezone.utc) - ts).total_seconds() / 3600.0
+    return math.exp(-dt_hours / float(tau_hours))
+
+def compute_score_trend(likes: int, comments: int, posted_at: datetime) -> float:
+    # 50% likes + 30% comments + 20% récence
+    likes_norm = math.sqrt(max(likes, 0))
+    comments_norm = math.sqrt(max(comments, 0)) * 2
+    recency_score = recency_decay(posted_at, tau_hours=24) * 10
+    return 0.5 * likes_norm + 0.3 * comments_norm + 0.2 * recency_score
+
+class PostModel(BaseModel):
+    id: str
+    platform: Literal["instagram"] = "instagram"
+    username: Optional[str] = None
+    caption: Optional[str] = None
+    hashtags: List[str] = Field(default_factory=list)
+    media_type: Optional[str] = None
+    media_url: Optional[str] = None
+    permalink: Optional[str] = None
+    posted_at: datetime
+    like_count: int = 0
+    comments_count: int = 0
+    score_trend: float = 0.0
+    
+    @classmethod
+    def from_ig_media(cls, media: dict) -> "PostModel":
+        timestamp_str = media.get("timestamp", "")
+        try:
+            posted_at = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
+        except:
+            posted_at = datetime.now(timezone.utc)
+        
+        caption = media.get("caption", "")
+        hashtags = extract_hashtags(caption)
+        media_url = media.get("media_url") or media.get("thumbnail_url")
+        like_count = int(media.get("like_count", 0))
+        comments_count = int(media.get("comments_count", 0))
+        score = compute_score_trend(like_count, comments_count, posted_at)
+        
+        return cls(
+            id=f"ig_{media['id']}",
+            username=media.get("username"),
+            caption=caption,
+            hashtags=hashtags,
+            media_type=media.get("media_type"),
+            media_url=media_url,
+            permalink=media.get("permalink"),
+            posted_at=posted_at,
+            like_count=like_count,
+            comments_count=comments_count,
+            score_trend=score
+        )
+
+class MeiliResponse(BaseModel):
+    hits: list[Any]
+    offset: int | None = None
+    limit: int | None = None
+    estimatedTotalHits: int | None = None
+    facetDistribution: dict | None = None

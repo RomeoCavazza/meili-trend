@@ -1,36 +1,34 @@
+# Git
+.git
+.gitignore
+
 # Environment
 .env
-.env.local
+.env.*
 
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
-.Python
-venv/
 .venv/
+venv/
 env/
-ENV/
-
-# Meilisearch
-meili_data/
-
-# Node
-node_modules/
-.vercel/
 
 # IDE
 .vscode/
 .idea/
 *.swp
-*.swo
-*~
 
 # OS
 .DS_Store
 Thumbs.db
-*.log
 
-# Docker
-*.pid
+# Tests
+tests/
+*.test.py
+
+# Docs
+README.md
+*.md
+

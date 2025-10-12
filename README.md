@@ -1,44 +1,49 @@
-# MeiliTrends
+# Insidr
 
-Micro-service de recherche/reco pour TikTok/Instagram avec Meilisearch + FastAPI.
+Moteur de recherche Instagram (Graph API + Meilisearch).
 
-## Quickstart
+## Démarrage
+
 ```bash
 cp .env.example .env
-docker compose up -d --build
-curl -X POST localhost:8000/index/init
-curl -X POST localhost:8000/seed
-curl -s -X POST localhost:8000/search -H 'content-type: application/json' -d '{"q":"ai","hitsPerPage":5}'
+# Éditer .env : remplir IG_ACCESS_TOKEN et IG_USER_ID
+
+docker compose up
 ```
 
-## API
-- `GET /health` - Status
-- `POST /index/init` - Init index
-- `POST /seed` - Load data
-- `POST /search` - Search posts
-- `GET /similar/{id}` - Similar posts
-- `GET /stats` - Statistics
+## Tests
 
-## Front
 ```bash
-python3 -m http.server -d front 5500
-# http://localhost:5500
+# Health
+curl http://localhost:8000/healthz
+
+# Ingestion
+curl -X POST http://localhost:8000/v1/ingest/instagram/hashtag \
+  -H 'Content-Type: application/json' \
+  -d '{"tag":"fashion","kind":"top","limit":25}'
+
+# Recherche
+curl "http://localhost:8000/v1/search/posts?q=fashion&sort=score_trend:desc"
 ```
 
-## Post Schema
-```json
-{
-  "id": "tt_001",
-  "source": "tiktok",
-  "title": "AI filter goes viral",
-  "text": "New genAI beauty filter demo...",
-  "hashtags": ["ai", "filter", "beauty"],
-  "author": "@alice_tech",
-  "lang": "en",
-  "date": "2025-01-15T09:00:00Z",
-  "likes": 1280,
-  "views": 15200,
-  "url": "https://tiktok.com/...",
-  "thumb": "https://example.com/thumb.jpg"
-}
+## Structure
+
 ```
+backend/          API FastAPI + connecteurs
+  ├── app.py              Routes & endpoints
+  ├── config.py           Variables d'environnement
+  ├── instagram_client.py Connecteur Instagram Graph API
+  ├── models.py           Modèles Pydantic + scoring
+  └── search.py           Client Meilisearch
+
+frontend/         Site web statique (Vercel)
+  ├── app.js              Logique recherche (75 lignes)
+  ├── pages/              Landing + pages légales
+  └── vercel.json         Config routing
+
+.env.example      Template configuration
+```
+
+## License
+
+MIT
