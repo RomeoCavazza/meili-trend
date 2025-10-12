@@ -1,6 +1,6 @@
 # Insidr
 
-Moteur de recherche Instagram (Graph API + Meilisearch).
+🔎 Instagram search & analytics microservice powered by Meta Graph API + MeiliSearch
 
 ## Démarrage
 
