@@ -1,5 +1,8 @@
 {
   "rewrites": [
-    { "source": "/api/:path*", "destination": "https://insidr-production.up.railway.app/:path*" }
+    { "source": "/api/backend/:path*", "destination": "https://insidr-production.up.railway.app/:path*" },
+    { "source": "/privacy", "destination": "/api/privacy" },
+    { "source": "/terms", "destination": "/api/terms" },
+    { "source": "/data-deletion", "destination": "/api/data-deletion" }
   ]
 }
