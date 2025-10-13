@@ -1,4 +1,4 @@
-const API = "";
+const API = "/api";
 const $ = id => document.getElementById(id);
 
 async function search() {

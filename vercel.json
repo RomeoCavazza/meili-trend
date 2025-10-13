@@ -1,0 +1,32 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "frontend/**",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "frontend/$1"
+    }
+  ],
+  "env": {
+    "IG_ACCESS_TOKEN": "@ig_access_token",
+    "IG_USER_ID": "@ig_user_id",
+    "META_VERIFY_TOKEN": "@meta_verify_token",
+    "MEILI_HOST": "@meili_host",
+    "MEILI_MASTER_KEY": "@meili_master_key",
+    "MEILI_INDEX": "@meili_index"
+  }
+}
+

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Optional, List
 from pydantic import BaseModel
@@ -15,18 +15,40 @@ app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], all
 def startup():
     search.bootstrap_posts_index()
 
-@app.get("/health")
-def health():
-    return {"status": "ok"}
-
 @app.get("/healthz")
 def healthz():
     search.get_client().health()
-    return {"status": "healthy"}
+    return {"status": "ok"}
 
 @app.get("/stats")
 def stats():
     return search.stats()
+
+@app.post("/admin/seed")
+async def admin_seed(request: Request):
+    token = request.headers.get("X-Admin-Token")
+    if token != config.WEBHOOK_VERIFY_TOKEN:
+        raise HTTPException(403, "Unauthorized")
+    
+    search.bootstrap_posts_index()
+    return {"status": "index created", "ready": True}
+
+@app.get("/webhook")
+async def verify_webhook(request: Request):
+    mode = request.query_params.get("hub.mode")
+    token = request.query_params.get("hub.verify_token")
+    challenge = request.query_params.get("hub.challenge")
+    
+    if mode == "subscribe" and token == config.WEBHOOK_VERIFY_TOKEN:
+        return int(challenge)
+    
+    raise HTTPException(403, "Invalid verify token")
+
+@app.post("/webhook")
+async def receive_webhook(request: Request):
+    body = await request.json()
+    # TODO: process webhook events
+    return {"status": "received"}
 
 class IngestHashtagRequest(BaseModel):
     tag: str
@@ -69,10 +91,3 @@ def search_posts(
     }
     
     return search.search(body)
-
-@app.get("/v1/similar/{doc_id}")
-def similar(doc_id: str):
-    doc = search.get_document(doc_id)
-    if not doc:
-        raise HTTPException(404, "Document introuvable")
-    return search.search({"q": doc.get("caption", ""), "limit": 20})

@@ -33,14 +33,5 @@ def index_posts(posts: List[PostModel]) -> int:
 def search(body: dict) -> dict:
     return get_client().index(config.MEILI_INDEX).search(body.get("q", ""), body)
 
-def get_document(doc_id: str):
-    try:
-        return get_client().index(config.MEILI_INDEX).get_document(doc_id)
-    except:
-        return None
-
 def stats():
     return get_client().index(config.MEILI_INDEX).get_stats()
-
-def clear_index():
-    get_client().index(config.MEILI_INDEX).delete_all_documents()
