@@ -5,5 +5,3 @@ sys.path.append(str(Path(__file__).parent.parent / "backend"))
 
 from app import app
 
-handler = app
-
