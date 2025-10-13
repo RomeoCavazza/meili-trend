@@ -1,7 +1,10 @@
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import RedirectResponse, JSONResponse
 from typing import Optional, List
 from pydantic import BaseModel
+import os, time, hmac, hashlib, base64, urllib.parse
+import httpx
 
 import config
 import search
@@ -10,6 +13,38 @@ from instagram_client import search_hashtag, fetch_hashtag_media
 
 app = FastAPI(title="Insidr API", version="2.0.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+# OAuth Instagram configuration
+IG_APP_ID = os.getenv("IG_APP_ID")
+IG_APP_SECRET = os.getenv("IG_APP_SECRET")
+IG_REDIRECT_URI = os.getenv("IG_REDIRECT_URI", "https://www.insidr.dev/")
+STATE_SECRET = os.getenv("OAUTH_STATE_SECRET", "change-me")
+
+SCOPES = ",".join([
+    "instagram_business_basic",
+    "instagram_business_manage_messages", 
+    "instagram_business_manage_comments",
+    "instagram_business_content_publish",
+    "instagram_business_manage_insights",
+])
+
+def _sign_state(raw: str) -> str:
+    sig = hmac.new(STATE_SECRET.encode(), raw.encode(), hashlib.sha256).digest()
+    return base64.urlsafe_b64encode(sig).decode().rstrip("=")
+
+def _make_state() -> str:
+    payload = f"{int(time.time())}"
+    return f"{payload}.{_sign_state(payload)}"
+
+def _check_state(state: str, max_age=600) -> bool:
+    try:
+        ts_str, sig = state.split(".", 1)
+        expected = _sign_state(ts_str)
+        if not hmac.compare_digest(sig, expected):
+            return False
+        return (int(time.time()) - int(ts_str)) <= max_age
+    except Exception:
+        return False
 
 @app.on_event("startup")
 def startup():
@@ -58,6 +93,88 @@ async def meta_deauth(request: Request):
         return {"status": "ok"}
     except:
         return {"status": "ok"}
+
+@app.get("/auth/instagram/start")
+def auth_start():
+    if not (IG_APP_ID and IG_REDIRECT_URI):
+        raise HTTPException(500, "IG_APP_ID/IG_REDIRECT_URI missing")
+    state = _make_state()
+    params = {
+        "client_id": IG_APP_ID,
+        "redirect_uri": IG_REDIRECT_URI,
+        "response_type": "code",
+        "scope": SCOPES,
+        "state": state,
+        "force_reauth": "true",
+    }
+    url = "https://www.instagram.com/oauth/authorize?" + urllib.parse.urlencode(params)
+    resp = RedirectResponse(url)
+    resp.set_cookie("insidr_oauth_state", state, max_age=600, httponly=True, secure=True, samesite="lax")
+    return resp
+
+@app.get("/auth/callback")
+async def auth_callback(request: Request, code: str | None = None, state: str | None = None):
+    # Vérif state
+    cookie_state = request.cookies.get("insidr_oauth_state")
+    if not state or not cookie_state or state != cookie_state or not _check_state(state):
+        raise HTTPException(400, "Invalid state")
+
+    if not code:
+        raise HTTPException(400, "Missing code")
+
+    # 1) Short-lived token
+    async with httpx.AsyncClient(timeout=20) as client:
+        r = await client.get(
+            "https://graph.facebook.com/v21.0/oauth/access_token",
+            params={
+                "client_id": IG_APP_ID,
+                "client_secret": IG_APP_SECRET,
+                "redirect_uri": IG_REDIRECT_URI,
+                "code": code,
+            },
+        )
+        r.raise_for_status()
+        data = r.json()
+        short_token = data.get("access_token")
+
+        # 2) Long-lived token
+        r2 = await client.get(
+            "https://graph.facebook.com/v21.0/oauth/access_token",
+            params={
+                "grant_type": "fb_exchange_token",
+                "client_id": IG_APP_ID,
+                "client_secret": IG_APP_SECRET,
+                "fb_exchange_token": short_token,
+            },
+        )
+        r2.raise_for_status()
+        long_token = r2.json().get("access_token")
+
+        # 3) Récupérer Page(s) -> IG Business ID
+        pages = await client.get("https://graph.facebook.com/v21.0/me/accounts", params={"access_token": long_token})
+        pages.raise_for_status()
+        pages_data = pages.json().get("data", [])
+        ig_user_id = None
+        for p in pages_data:
+            page_id = p["id"]
+            r3 = await client.get(
+                f"https://graph.facebook.com/v21.0/{page_id}",
+                params={"fields": "instagram_business_account{username,id}", "access_token": long_token},
+            )
+            r3.raise_for_status()
+            ig = r3.json().get("instagram_business_account")
+            if ig and ig.get("id"):
+                ig_user_id = ig["id"]
+                break
+
+    payload = {
+        "ok": True,
+        "IG_ACCESS_TOKEN": long_token,
+        "IG_USER_ID": ig_user_id,
+        "note": "Ajoute ces valeurs comme variables d'environnement Railway puis redéploie."
+    }
+
+    return JSONResponse(payload)
 
 class IngestHashtagRequest(BaseModel):
     tag: str
