@@ -50,6 +50,12 @@ async def receive_webhook(request: Request):
     # TODO: process webhook events
     return {"status": "received"}
 
+@app.post("/meta/deauth")
+async def meta_deauth(request: Request):
+    body = await request.json()
+    # TODO: enregistrer l'event de désautorisation si besoin
+    return {"status": "ok"}
+
 class IngestHashtagRequest(BaseModel):
     tag: str
     kind: str = "top"
