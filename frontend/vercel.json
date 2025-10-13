@@ -1,5 +1,10 @@
 {
   "rewrites": [
     { "source": "/api/:path*", "destination": "https://insidr-production.up.railway.app/:path*" }
+  ],
+  "routes": [
+    { "src": "/privacy", "dest": "/pages/privacy.html" },
+    { "src": "/terms", "dest": "/pages/terms.html" },
+    { "src": "/data-deletion", "dest": "/pages/data-deletion.html" }
   ]
 }
