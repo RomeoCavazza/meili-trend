@@ -19,4 +19,5 @@ COPY backend/ ./
 
 # Démarrage : utiliser sh -c pour que ${PORT} soit substitué
 # Fallback en local sur 8000 si PORT n'est pas défini.
-CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Temporairement utiliser app_simple pour debug
+CMD ["sh", "-c", "uvicorn app_simple:app --host 0.0.0.0 --port ${PORT:-8000}"]
