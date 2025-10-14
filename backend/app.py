@@ -55,17 +55,23 @@ def _check_state(state: str, max_age=600) -> bool:
 
 @app.on_event("startup")
 def startup():
+    print("🚀 Insidr API starting up...")
     try:
         print("Starting bootstrap...")
         search.bootstrap_posts_index()
-        print("Bootstrap completed successfully")
+        print("✅ Bootstrap completed successfully")
     except Exception as e:
-        print(f"Bootstrap failed: {e}")
+        print(f"❌ Bootstrap failed: {e}")
         # Continue anyway - bootstrap will happen on first request
+    print("🎉 Startup completed - API ready to serve requests")
 
 @app.get("/")
 def root():
-    return {"message": "Insidr API is running", "version": "2.0.0"}
+    return {"message": "Insidr API is running", "version": "2.0.0", "status": "healthy"}
+
+@app.get("/ping")
+def ping():
+    return {"pong": True, "timestamp": int(time.time())}
 
 @app.get("/healthz")
 def healthz():
