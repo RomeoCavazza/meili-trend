@@ -5,8 +5,7 @@ COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY backend/ .
 
-# Rendre le script exécutable
-RUN chmod +x start.sh
-
 EXPOSE 8000
-CMD ["./start.sh"]
+
+# Utiliser sh -c pour interpréter la variable d'environnement
+CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}"]
