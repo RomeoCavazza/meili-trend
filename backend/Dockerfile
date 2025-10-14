@@ -7,5 +7,5 @@ COPY backend/ .
 
 EXPOSE 8000
 
-# Utiliser sh -c pour interpréter la variable d'environnement
-CMD ["sh", "-c", "uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Debug: afficher la variable PORT et forcer un port valide
+CMD ["sh", "-c", "echo 'PORT variable:' $PORT && uvicorn app:app --host 0.0.0.0 --port 8000"]
