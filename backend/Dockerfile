@@ -17,7 +17,6 @@ RUN pip install -r requirements.txt
 # code
 COPY backend/ ./
 
-# Démarrage : utiliser sh -c pour que ${PORT} soit substitué
-# Fallback en local sur 8000 si PORT n'est pas défini.
-# Ajouter des logs de debug pour Railway
-CMD ["sh", "-c", "echo 'Starting uvicorn on port ${PORT:-8000}' && uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000} --log-level debug"]
+# Démarrage : utiliser exactement le port Railway (pas de fallback)
+# Railway doit fournir $PORT, sinon ça plante
+CMD ["sh", "-c", "echo 'Starting uvicorn on port $PORT' && uvicorn app:app --host 0.0.0.0 --port $PORT"]
