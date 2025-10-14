@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse, JSONResponse
+from fastapi.responses import RedirectResponse
 from typing import Optional, List
 from pydantic import BaseModel
 import os, time, hmac, hashlib, base64, urllib.parse
@@ -12,7 +12,14 @@ from models import PostModel, MeiliResponse
 from instagram_client import search_hashtag, fetch_hashtag_media
 
 app = FastAPI(title="Insidr API", version="2.0.0")
-app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://www.insidr.dev", "http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST"],
+    allow_headers=["*"],
+)
 
 # OAuth Instagram configuration
 IG_APP_ID = os.getenv("IG_APP_ID")
@@ -112,15 +119,24 @@ def auth_start():
     resp.set_cookie("insidr_oauth_state", state, max_age=600, httponly=True, secure=True, samesite="lax")
     return resp
 
+@app.get("/auth/status")
+def auth_status():
+    """Vérifier le statut de connexion Instagram"""
+    if config.IG_ACCESS_TOKEN and config.IG_USER_ID:
+        return {"connected": True, "user_id": config.IG_USER_ID}
+    return {"connected": False}
+
 @app.get("/auth/callback")
-async def auth_callback(request: Request, code: str | None = None, state: str | None = None):
-    # Vérif state
+async def auth_callback(request: Request, code: str | None = None, state: str | None = None, error: str | None = None):
+    if error:
+        return RedirectResponse(f"https://www.insidr.dev/review?error={error}", status_code=302)
+    
     cookie_state = request.cookies.get("insidr_oauth_state")
     if not state or not cookie_state or state != cookie_state or not _check_state(state):
-        raise HTTPException(400, "Invalid state")
+        return RedirectResponse("https://www.insidr.dev/review?error=invalid_state", status_code=302)
 
     if not code:
-        raise HTTPException(400, "Missing code")
+        return RedirectResponse("https://www.insidr.dev/review?error=missing_code", status_code=302)
 
     # 1) Short-lived token
     async with httpx.AsyncClient(timeout=20) as client:
@@ -167,14 +183,7 @@ async def auth_callback(request: Request, code: str | None = None, state: str | 
                 ig_user_id = ig["id"]
                 break
 
-    payload = {
-        "ok": True,
-        "IG_ACCESS_TOKEN": long_token,
-        "IG_USER_ID": ig_user_id,
-        "note": "Ajoute ces valeurs comme variables d'environnement Railway puis redéploie."
-    }
-
-    return JSONResponse(payload)
+    return RedirectResponse("https://www.insidr.dev/review?connected=1", status_code=302)
 
 class IngestHashtagRequest(BaseModel):
     tag: str
