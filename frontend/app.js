@@ -1,4 +1,4 @@
-const API = "/api";
+const API = "/api/backend";
 
 async function search() {
   const q = document.getElementById("q").value.trim();

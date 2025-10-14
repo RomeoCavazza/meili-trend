@@ -1,7 +1,7 @@
 {
   "rewrites": [
     { "source": "/api/backend/:path*", "destination": "https://insidr-production.up.railway.app/:path*" },
-    { "source": "/review", "destination": "/pages/review.html" },
+    { "source": "/review", "destination": "/api/review" },
     { "source": "/privacy", "destination": "/api/privacy" },
     { "source": "/terms", "destination": "/api/terms" },
     { "source": "/data-deletion", "destination": "/api/data-deletion" },
