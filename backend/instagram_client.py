@@ -5,8 +5,17 @@ API = "https://graph.facebook.com/v19.0"
 
 def search_hashtag(tag: str, token: str, user_id: str) -> Optional[str]:
     tag = tag.strip().lstrip("#")
+    print(f"🔍 Recherche hashtag: '{tag}' avec user_id: {user_id}")
+    
     r = httpx.get(f"{API}/ig_hashtag_search", params={"user_id": user_id, "q": tag, "access_token": token})
     data = r.json()
+    
+    print(f"🔍 Réponse API: {data}")
+    
+    if "error" in data:
+        print(f"❌ Erreur API: {data['error']}")
+        return None
+        
     return data["data"][0]["id"] if data.get("data") else None
 
 def fetch_hashtag_media(hashtag_id: str, kind: Literal["top", "recent"], limit: int, token: str, user_id: str) -> List[Dict]:
