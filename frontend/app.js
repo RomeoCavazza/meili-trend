@@ -43,9 +43,30 @@ async function search() {
 
 // Fonction d'ingestion supprimée - Utilisation de la recherche directe
 
-document.getElementById("go").onclick = search;
-document.getElementById("q").oninput = () => {
-  clearTimeout(window.t);
-  window.t = setTimeout(search, 300);
-};
-document.getElementById("q").onkeydown = e => e.key === 'Enter' && search();
+// Attendre que le DOM soit chargé
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🔍 DOM chargé, attachement des event listeners');
+  
+  const goButton = document.getElementById("go");
+  const searchInput = document.getElementById("q");
+  
+  console.log('🔍 Button go:', goButton);
+  console.log('🔍 Input q:', searchInput);
+  
+  if (goButton) {
+    goButton.onclick = search;
+  }
+  
+  if (searchInput) {
+    searchInput.oninput = () => {
+      console.log('🔍 Input event triggered, value:', searchInput.value);
+      clearTimeout(window.t);
+      window.t = setTimeout(search, 300);
+    };
+    
+    searchInput.onkeydown = e => {
+      console.log('🔍 Keydown event:', e.key);
+      e.key === 'Enter' && search();
+    };
+  }
+});
