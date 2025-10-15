@@ -56,19 +56,25 @@ document.addEventListener('DOMContentLoaded', function() {
   
   if (goButton) {
     goButton.onclick = search;
+    console.log('🔍 Button onclick attaché');
   }
   
   if (searchInput) {
-    searchInput.oninput = () => {
-      console.log('🔍 Input event triggered, value:', searchInput.value);
+    // Ajouter un event listener pour tester
+    searchInput.addEventListener('input', function(e) {
+      console.log('🔍 Input event triggered, value:', e.target.value);
       clearTimeout(window.t);
       window.t = setTimeout(search, 300);
-    };
+    });
     
-    searchInput.onkeydown = e => {
+    searchInput.addEventListener('keydown', function(e) {
       console.log('🔍 Keydown event:', e.key);
-      e.key === 'Enter' && search();
-    };
+      if (e.key === 'Enter') {
+        search();
+      }
+    });
+    
+    console.log('🔍 Event listeners attachés');
   }
 });`;
 
