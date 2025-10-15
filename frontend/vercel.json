@@ -13,6 +13,7 @@
     { "source": "/privacy", "destination": "/api/privacy" },
     { "source": "/terms", "destination": "/api/terms" },
     { "source": "/data-deletion", "destination": "/api/data-deletion" },
+    { "source": "/search", "destination": "/pages/search.html" },
     { "source": "/favicon.png", "destination": "/api/favicon" }
   ]
 }
