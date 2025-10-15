@@ -4,7 +4,9 @@ async function search() {
   const q = document.getElementById("q").value.trim();
   const res = document.getElementById("results");
   
-  const r = await fetch(`${API}/v1/search/posts?q=${q}&limit=20&sort=score_trend:desc`);
+  // Si pas de recherche, afficher tous les posts Instagram
+  const searchQuery = q || "";
+  const r = await fetch(`${API}/v1/search/posts?q=${searchQuery}&limit=20&sort=score_trend:desc`);
   const data = await r.json();
   
   if (!data.hits?.length) {
