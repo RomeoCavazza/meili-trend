@@ -10,41 +10,38 @@ async function search() {
   const data = await r.json();
   
   if (!data.hits?.length) {
-    res.innerHTML = `<li>Aucun résultat<br><button onclick="ingest('${q}')">Ingérer #${q}</button></li>`;
+    res.innerHTML = `<li>Aucun résultat pour "${q}"<br><small>Essayez un autre hashtag</small></li>`;
     return;
   }
   
   res.innerHTML = data.hits.map(h => `
-    <li>
-      <div style="display:flex;gap:1rem">
-        ${h.media_url ? `<img src="${h.media_url}" style="width:100px;height:100px;object-fit:cover;border-radius:8px">` : ''}
+    <li style="padding:1rem;border-bottom:1px solid #333;background:#1a1a1a;border-radius:8px;margin-bottom:0.5rem;">
+      <div style="display:flex;gap:1rem;align-items:flex-start">
+        <div style="width:60px;height:60px;background:#333;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#666;font-size:12px;">
+          ${h.media_type || 'POST'}
+        </div>
         <div style="flex:1">
-          <strong>${h.username || 'Instagram'}</strong>
-          <span>❤️ ${h.like_count||0}</span>
-          <span>💬 ${h.comments_count||0}</span>
-          <span>🔥 ${(h.score_trend||0).toFixed(1)}</span>
-          <p>${(h.caption||'').slice(0,200)}</p>
-          <small>${(h.hashtags||[]).slice(0,5).map(x=>'#'+x).join(' ')} ${h.permalink?`<a href="${h.permalink}" target="_blank">→</a>`:''}</small>
+          <div style="display:flex;gap:1rem;align-items:center;margin-bottom:0.5rem;">
+            <strong style="color:#fff;">${h.username || 'Instagram User'}</strong>
+            <span style="color:#888;font-size:12px;">${h.media_type || 'POST'}</span>
+          </div>
+          <div style="display:flex;gap:1rem;margin-bottom:0.5rem;font-size:12px;color:#888;">
+            <span>❤️ ${h.like_count||0}</span>
+            <span>💬 ${h.comments_count||0}</span>
+            <span>🔥 ${(h.score_trend||0).toFixed(1)}</span>
+          </div>
+          <p style="color:#ccc;font-size:14px;margin:0.5rem 0;">${(h.caption||'Pas de description').slice(0,150)}${(h.caption||'').length > 150 ? '...' : ''}</p>
+          <div style="font-size:12px;color:#666;">
+            <span>ID: ${h.id}</span>
+            ${h.permalink ? ` | <a href="${h.permalink}" target="_blank" style="color:#0095f6;">Voir sur Instagram</a>` : ''}
+          </div>
         </div>
       </div>
     </li>
   `).join('');
 }
 
-async function ingest(tag) {
-  const res = document.getElementById("results");
-  res.innerHTML = `<li>⏳ Ingestion...</li>`;
-  
-  const r = await fetch(`${API}/v1/ingest/instagram/hashtag`, {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({tag: tag.replace('#',''), kind: 'top', limit: 30})
-  });
-  
-  const data = await r.json();
-  res.innerHTML = `<li>✅ ${data.inserted} posts</li>`;
-  setTimeout(search, 1500);
-}
+// Fonction d'ingestion supprimée - Utilisation de la recherche directe
 
 document.getElementById("go").onclick = search;
 document.getElementById("q").oninput = () => {
