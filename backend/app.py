@@ -228,13 +228,25 @@ class IngestHashtagRequest(BaseModel):
 
 @app.post("/v1/ingest/instagram/hashtag")
 def ingest_hashtag(req: IngestHashtagRequest):
+    print(f"🔍 Ingestion hashtag: {req.tag}, kind: {req.kind}, limit: {req.limit}")
+    print(f"🔑 Token: {config.IG_ACCESS_TOKEN[:20]}...")
+    print(f"👤 User ID: {config.IG_USER_ID}")
+    
     hashtag_id = search_hashtag(req.tag, config.IG_ACCESS_TOKEN, config.IG_USER_ID)
+    print(f"🏷️ Hashtag ID: {hashtag_id}")
+    
     if not hashtag_id:
+        print("❌ Hashtag introuvable")
         raise HTTPException(404, "Hashtag introuvable")
     
     media_list = fetch_hashtag_media(hashtag_id, req.kind, req.limit, config.IG_ACCESS_TOKEN, config.IG_USER_ID)
+    print(f"📸 Media list length: {len(media_list)}")
+    
     posts = [PostModel.from_ig_media(m) for m in media_list]
+    print(f"📝 Posts created: {len(posts)}")
+    
     count = search.index_posts(posts)
+    print(f"💾 Indexed count: {count}")
     
     return {"inserted": count, "hashtag": req.tag}
 
