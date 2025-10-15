@@ -24,7 +24,7 @@ app.add_middleware(
 # OAuth Instagram configuration
 IG_APP_ID = os.getenv("IG_APP_ID")
 IG_APP_SECRET = os.getenv("IG_APP_SECRET")
-IG_REDIRECT_URI = os.getenv("IG_REDIRECT_URI", "https://www.insidr.dev/")
+IG_REDIRECT_URI = os.getenv("IG_REDIRECT_URI", "https://www.insidr.dev/auth/callback")
 STATE_SECRET = os.getenv("OAUTH_STATE_SECRET", "change-me")
 
 SCOPES = ",".join([
