@@ -20,4 +20,4 @@ COPY backend/ ./
 # Démarrage : utiliser exactement le port Railway (pas de fallback)
 # Railway doit fournir $PORT, sinon ça plante
 ENV PORT=8000
-CMD ["sh", "-c", "echo 'Starting uvicorn on port $PORT' && uvicorn app:app --host 0.0.0.0 --port $PORT"]
+CMD ["sh", "-c", "echo 'Starting uvicorn on port $PORT' && uvicorn app:app --host 0.0.0.0 --port $PORT --log-level info"]
