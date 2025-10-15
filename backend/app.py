@@ -213,6 +213,12 @@ async def auth_callback(request: Request, code: str | None = None, state: str | 
                 ig_user_id = ig["id"]
                 break
 
+    # 4) Mettre à jour les variables d'environnement
+    if long_token and ig_user_id:
+        config.IG_ACCESS_TOKEN = long_token
+        config.IG_USER_ID = ig_user_id
+        print(f"✅ Token OAuth mis à jour: user_id={ig_user_id}")
+
     return RedirectResponse("https://www.insidr.dev/review?connected=1", status_code=302)
 
 class IngestHashtagRequest(BaseModel):
