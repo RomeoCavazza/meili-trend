@@ -7,8 +7,7 @@ import os, time, hmac, hashlib, base64, urllib.parse
 import httpx
 
 import config
-import search
-from models import PostModel, MeiliResponse
+from models import PostModel
 from instagram_client import search_hashtag, fetch_hashtag_media
 
 app = FastAPI(title="Insidr API", version="2.0.0")
@@ -56,14 +55,7 @@ def _check_state(state: str, max_age=600) -> bool:
 @app.on_event("startup")
 def startup():
     print("🚀 Insidr API starting up...")
-    try:
-        print("Starting bootstrap...")
-        search.bootstrap_posts_index()
-        print("✅ Bootstrap completed successfully")
-    except Exception as e:
-        print(f"❌ Bootstrap failed: {e}")
-        # Continue anyway - bootstrap will happen on first request
-    print("🎉 Startup completed - API ready to serve requests")
+    print("🎉 Startup completed - API ready to serve requests (Direct Instagram scraping)")
 
 @app.get("/")
 def root():
@@ -94,16 +86,11 @@ def test():
 
 @app.get("/stats")
 def stats():
-    return search.stats()
+    return {"message": "Direct Instagram scraping - No MeiliSearch stats"}
 
 @app.post("/admin/seed")
 async def admin_seed(request: Request):
-    token = request.headers.get("X-Admin-Token")
-    if token != config.WEBHOOK_VERIFY_TOKEN:
-        raise HTTPException(403, "Unauthorized")
-    
-    search.bootstrap_posts_index()
-    return {"status": "index created", "ready": True}
+    return {"message": "Direct Instagram scraping - No MeiliSearch seeding needed"}
 
 @app.get("/webhook")
 async def verify_webhook(request: Request):
@@ -221,36 +208,9 @@ async def auth_callback(request: Request, code: str | None = None, state: str | 
 
     return RedirectResponse("https://www.insidr.dev/review?connected=1", status_code=302)
 
-class IngestHashtagRequest(BaseModel):
-    tag: str
-    kind: str = "top"
-    limit: int = 30
+# Endpoint d'ingestion supprimé - Utilisation de la recherche directe
 
-@app.post("/v1/ingest/instagram/hashtag")
-def ingest_hashtag(req: IngestHashtagRequest):
-    print(f"🔍 Ingestion hashtag: {req.tag}, kind: {req.kind}, limit: {req.limit}")
-    print(f"🔑 Token: {config.IG_ACCESS_TOKEN[:20]}...")
-    print(f"👤 User ID: {config.IG_USER_ID}")
-    
-    hashtag_id = search_hashtag(req.tag, config.IG_ACCESS_TOKEN, config.IG_USER_ID)
-    print(f"🏷️ Hashtag ID: {hashtag_id}")
-    
-    if not hashtag_id:
-        print("❌ Hashtag introuvable")
-        raise HTTPException(404, "Hashtag introuvable")
-    
-    media_list = fetch_hashtag_media(hashtag_id, req.kind, req.limit, config.IG_ACCESS_TOKEN, config.IG_USER_ID)
-    print(f"📸 Media list length: {len(media_list)}")
-    
-    posts = [PostModel.from_ig_media(m) for m in media_list]
-    print(f"📝 Posts created: {len(posts)}")
-    
-    count = search.index_posts(posts)
-    print(f"💾 Indexed count: {count}")
-    
-    return {"inserted": count, "hashtag": req.tag}
-
-@app.get("/v1/search/posts", response_model=MeiliResponse)
+@app.get("/v1/search/posts")
 def search_posts(
     q: Optional[str] = None,
     hashtags: Optional[List[str]] = Query(None),
@@ -259,18 +219,32 @@ def search_posts(
     limit: int = Query(20, ge=1, le=100),
     page: int = Query(1, ge=1)
 ):
-    filters = []
-    if hashtags:
-        filters.append("(" + " OR ".join([f'hashtags = "{h.lower()}"' for h in hashtags]) + ")")
-    if username:
-        filters.append(f'username = "{username}"')
+    """Recherche directe Instagram - Pas d'indexation MeiliSearch"""
+    if not q:
+        return {"hits": [], "estimatedTotalHits": 0, "message": "Recherche vide"}
     
-    body = {
-        "q": q or "",
-        "filter": " AND ".join(filters) if filters else None,
-        "limit": limit,
-        "page": page,
-        "sort": [sort] if sort else None
+    print(f"🔍 Recherche directe Instagram: {q}")
+    
+    # Scraping direct Instagram
+    hashtag_id = search_hashtag(q, config.IG_ACCESS_TOKEN, config.IG_USER_ID)
+    if not hashtag_id:
+        return {"hits": [], "estimatedTotalHits": 0, "message": f"Hashtag '{q}' introuvable"}
+    
+    # Récupérer les médias
+    media_list = fetch_hashtag_media(hashtag_id, "top", limit, config.IG_ACCESS_TOKEN, config.IG_USER_ID)
+    posts = [PostModel.from_ig_media(m) for m in media_list]
+    
+    print(f"📸 Posts trouvés: {len(posts)}")
+    
+    # Formatage pour le frontend
+    hits = [p.model_dump() for p in posts]
+    for hit in hits:
+        if hit.get("posted_at"):
+            hit["posted_at"] = hit["posted_at"].isoformat()
+    
+    return {
+        "hits": hits,
+        "estimatedTotalHits": len(hits),
+        "query": q,
+        "processingTimeMs": 0
     }
-    
-    return search.search(body)
