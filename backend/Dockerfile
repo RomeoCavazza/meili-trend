@@ -18,9 +18,9 @@ RUN pip install -r requirements.txt
 COPY backend/ ./
 
 # ----- runtime -----
-# Use a *shell-form* CMD so $PORT is expanded by the shell
-CMD bash -lc 'echo "Starting on port $PORT" && exec gunicorn app:app \
+# Railway provides PORT environment variable
+CMD bash -lc 'echo "PORT=$PORT" && exec gunicorn app:app \
   -k uvicorn.workers.UvicornWorker \
-  --bind 0.0.0.0:$PORT \
+  --bind 0.0.0.0:${PORT:-8000} \
   --workers 2 --threads 8 --timeout 120 --keep-alive 75 \
   --access-logfile - --error-logfile -'
