@@ -1,5 +1,5 @@
 export default function handler(req, res) {
-  const content = `const API = "/api/backend";
+  const content = \`const API = "/api/backend";
 
 async function search() {
   const q = document.getElementById("q").value.trim();
@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('🔍 Event listeners attachés');
   }
-});`;
+});\`;
 
   res.setHeader('Content-Type', 'application/javascript');
   res.setHeader('Cache-Control', 'public, max-age=3600');
