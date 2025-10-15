@@ -1,5 +1,6 @@
 {
   "rewrites": [
+    { "source": "/api/backend/:path*", "destination": "https://insidr-production.up.railway.app/:path*" },
     { "source": "/api/healthz", "destination": "https://insidr-production.up.railway.app/api/healthz" },
     { "source": "/api/test", "destination": "https://insidr-production.up.railway.app/test" },
     { "source": "/api/webhook", "destination": "https://insidr-production.up.railway.app/webhook" },
