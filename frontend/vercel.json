@@ -14,7 +14,7 @@
     { "source": "/terms", "destination": "/api/terms" },
     { "source": "/data-deletion", "destination": "/api/data-deletion" },
     { "source": "/search", "destination": "/api/search" },
-    { "source": "/app.js", "destination": "/api/app.js" },
+    { "source": "/app.js", "destination": "/api/app-js" },
     { "source": "/favicon.png", "destination": "/api/favicon" }
   ]
 }
