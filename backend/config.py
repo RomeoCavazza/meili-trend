@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-MEILI_HOST = os.getenv("MEILI_HOST", "http://meilisearch:7700")
+MEILI_HOST = os.getenv("MEILI_HOST", "https://meili.insidr.dev")
 MEILI_MASTER_KEY = os.getenv("MEILI_MASTER_KEY", "masterKey")
 MEILI_INDEX = os.getenv("MEILI_INDEX", "posts")
 IG_ACCESS_TOKEN = os.getenv("IG_ACCESS_TOKEN")
