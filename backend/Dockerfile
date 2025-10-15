@@ -18,9 +18,9 @@ RUN pip install -r requirements.txt
 COPY backend/ ./
 
 # ----- runtime -----
-# Railway provides PORT environment variable
-CMD bash -lc 'echo "PORT=$PORT" && exec gunicorn app:app \
+# Railway expects port 8000 (see Networking settings)
+CMD bash -lc 'echo "Starting on port 8000" && exec gunicorn app:app \
   -k uvicorn.workers.UvicornWorker \
-  --bind 0.0.0.0:${PORT:-8000} \
+  --bind 0.0.0.0:8000 \
   --workers 2 --threads 8 --timeout 120 --keep-alive 75 \
   --access-logfile - --error-logfile -'
