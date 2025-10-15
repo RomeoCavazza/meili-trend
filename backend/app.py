@@ -87,6 +87,11 @@ def api_healthz():
     # Temporairement sans MeiliSearch pour debug
     return {"status": "ok", "message": "API running"}
 
+@app.get("/test")
+def test():
+    """Ultra simple test endpoint"""
+    return {"test": "ok", "port": "8000"}
+
 @app.get("/stats")
 def stats():
     return search.stats()
