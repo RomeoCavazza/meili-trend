@@ -19,4 +19,4 @@ COPY backend/ ./
 
 # Démarrage : utiliser exactement le port Railway (pas de fallback)
 # Railway doit fournir $PORT, sinon ça plante
-CMD ["sh", "-c", "echo 'Starting uvicorn on port $PORT' && uvicorn app:app --host 0.0.0.0 --port $PORT"]
+CMD ["sh", "-c", "echo 'Starting gunicorn on port $PORT' && gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --worker-class uvicorn.workers.UvicornWorker"]
