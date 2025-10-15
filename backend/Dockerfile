@@ -18,9 +18,5 @@ RUN pip install -r requirements.txt
 COPY backend/ ./
 
 # ----- runtime -----
-# Use a *shell-form* CMD so $PORT is expanded by the shell
-CMD bash -lc 'exec gunicorn app:app \
-  -k uvicorn.workers.UvicornWorker \
-  --bind 0.0.0.0:$PORT \
-  --workers 2 --threads 8 --timeout 120 --keep-alive 75 \
-  --access-logfile - --error-logfile -'
+# Railway UI Start Command will override this CMD
+# CMD removed to avoid conflict with Railway UI
