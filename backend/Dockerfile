@@ -17,6 +17,10 @@ RUN pip install -r requirements.txt
 # code
 COPY backend/ ./
 
-# Démarrage : utiliser exactement le port Railway (pas de fallback)
-# Railway doit fournir $PORT, sinon ça plante
-CMD ["sh", "-c", "echo 'Starting uvicorn on port $PORT' && uvicorn app:app --host 0.0.0.0 --port ${PORT:-8000} --log-level info"]
+# ----- runtime -----
+# Use a *shell-form* CMD so $PORT is expanded by the shell
+CMD bash -lc 'exec gunicorn app:app \
+  -k uvicorn.workers.UvicornWorker \
+  --bind 0.0.0.0:$PORT \
+  --workers 2 --threads 8 --timeout 120 --keep-alive 75 \
+  --access-logfile - --error-logfile -'
