@@ -44,12 +44,21 @@ async function search() {
 
 // Fonction d'ingestion supprimée - Utilisation de la recherche directe
 
+// Debug: Vérifier que les éléments existent
+console.log('🔍 Debug: Chargement app.js');
+console.log('🔍 Element go:', document.getElementById("go"));
+console.log('🔍 Element q:', document.getElementById("q"));
+
 document.getElementById("go").onclick = search;
 document.getElementById("q").oninput = () => {
+  console.log('🔍 Input event triggered');
   clearTimeout(window.t);
   window.t = setTimeout(search, 300);
 };
-document.getElementById("q").onkeydown = e => e.key === 'Enter' && search();`;
+document.getElementById("q").onkeydown = e => {
+  console.log('🔍 Keydown event:', e.key);
+  e.key === 'Enter' && search();
+};`;
 
   res.setHeader('Content-Type', 'application/javascript');
   res.setHeader('Cache-Control', 'public, max-age=3600');
