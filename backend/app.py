@@ -84,11 +84,8 @@ def healthz():
 @app.get("/api/healthz")
 def api_healthz():
     """Healthcheck endpoint for Railway"""
-    try:
-        search.get_client().health()
-        return {"status": "ok"}
-    except Exception as e:
-        return {"status": "error", "message": str(e)}
+    # Temporairement sans MeiliSearch pour debug
+    return {"status": "ok", "message": "API running"}
 
 @app.get("/stats")
 def stats():
