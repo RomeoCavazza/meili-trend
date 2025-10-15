@@ -18,4 +18,24 @@ def fetch_hashtag_media(hashtag_id: str, kind: Literal["top", "recent"], limit: 
         params={"user_id": user_id, "fields": fields, "access_token": token, "limit": min(limit, 50)}
     )
     
-    return r.json().get("data", [])
+    media_list = r.json().get("data", [])
+    
+    # Récupérer les détails de chaque média
+    detailed_media = []
+    for media in media_list:
+        media_id = media["id"]
+        # Récupérer les détails complets du média
+        detail_r = httpx.get(
+            f"{API}/{media_id}",
+            params={
+                "fields": "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count,username",
+                "access_token": token
+            }
+        )
+        if detail_r.status_code == 200:
+            detailed_media.append(detail_r.json())
+        else:
+            # Fallback avec les données de base
+            detailed_media.append(media)
+    
+    return detailed_media
