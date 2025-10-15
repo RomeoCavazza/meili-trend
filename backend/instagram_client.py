@@ -11,7 +11,7 @@ def search_hashtag(tag: str, token: str, user_id: str) -> Optional[str]:
 
 def fetch_hashtag_media(hashtag_id: str, kind: Literal["top", "recent"], limit: int, token: str, user_id: str) -> List[Dict]:
     endpoint = "top_media" if kind == "top" else "recent_media"
-    fields = "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count,username"
+    fields = "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp"
     
     r = httpx.get(
         f"{API}/{hashtag_id}/{endpoint}",
