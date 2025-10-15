@@ -9,6 +9,7 @@ import httpx
 import config
 from models import PostModel
 from instagram_client import search_hashtag, fetch_hashtag_media
+import search
 
 app = FastAPI(title="Insidr API", version="2.0.0")
 
