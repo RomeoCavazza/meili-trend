@@ -37,12 +37,25 @@ def fetch_hashtag_media(hashtag_id: str, kind: Literal["top", "recent"], limit: 
         detail_r = httpx.get(
             f"{API}/{media_id}",
             params={
-                "fields": "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count,username",
+                "fields": "id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,like_count,comments_count",
                 "access_token": token
             }
         )
         if detail_r.status_code == 200:
-            detailed_media.append(detail_r.json())
+            media_data = detail_r.json()
+            
+            # Récupérer le username via l'endpoint /me
+            try:
+                user_r = httpx.get(f"{API}/me", params={"fields": "username", "access_token": token})
+                if user_r.status_code == 200:
+                    user_data = user_r.json()
+                    media_data["username"] = user_data.get("username", "Instagram User")
+                else:
+                    media_data["username"] = "Instagram User"
+            except:
+                media_data["username"] = "Instagram User"
+            
+            detailed_media.append(media_data)
         else:
             # Fallback avec les données de base
             detailed_media.append(media)
