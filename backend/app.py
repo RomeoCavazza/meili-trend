@@ -6,10 +6,27 @@ from pydantic import BaseModel
 import os, time, hmac, hashlib, base64, urllib.parse
 import httpx
 
+import time
+from collections import defaultdict
 import config
 from models import PostModel
 from instagram_client import search_hashtag, fetch_hashtag_media
 import search
+
+# Rate limiting simple
+rate_limits = defaultdict(list)
+
+def check_rate_limit(ip: str, max_requests: int = 5, window: int = 3600):
+    """Rate limiting simple : 5 requêtes par heure par IP"""
+    now = time.time()
+    # Nettoyer les anciennes requêtes
+    rate_limits[ip] = [req_time for req_time in rate_limits[ip] if now - req_time < window]
+    
+    if len(rate_limits[ip]) >= max_requests:
+        return False
+    
+    rate_limits[ip].append(now)
+    return True
 
 app = FastAPI(title="Insidr API", version="2.0.0")
 
@@ -217,10 +234,18 @@ def search_posts(
     hashtags: Optional[List[str]] = Query(None),
     username: Optional[str] = None,
     sort: str = "score_trend:desc",
-    limit: int = Query(20, ge=1, le=100),
-    page: int = Query(1, ge=1)
+    limit: int = Query(5, ge=1, le=10),
+    page: int = Query(1, ge=1),
+    request: Request = None
 ):
     """Recherche directe Instagram - Pas d'indexation MeiliSearch"""
+    
+    # Rate limiting
+    if request:
+        client_ip = request.client.host
+        if not check_rate_limit(client_ip, max_requests=3, window=3600):  # 3 requêtes/heure
+            return {"error": "Rate limit exceeded. Max 3 requests per hour.", "status": 429}
+    
     if not q:
         return {"hits": [], "estimatedTotalHits": 0, "message": "Recherche vide"}
     
