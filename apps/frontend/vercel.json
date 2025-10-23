@@ -1,0 +1,20 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/backend/:path*",
+      "destination": "https://insidr-production.up.railway.app/:path*"
+    },
+    {
+      "source": "/auth/:path*",
+      "destination": "https://insidr-production.up.railway.app/auth/:path*"
+    },
+    {
+      "source": "/api/webhook",
+      "destination": "https://insidr-production.up.railway.app/webhook"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
