@@ -2,11 +2,11 @@
   "rewrites": [
     {
       "source": "/api/backend/:path*",
-      "destination": "https://insidr-production.up.railway.app/:path*"
+      "destination": "https://insidr-production.up.railway.app/api/:path*"
     },
     {
       "source": "/auth/:path*",
-      "destination": "https://insidr-production.up.railway.app/auth/:path*"
+      "destination": "https://insidr-production.up.railway.app/api/v1/auth/:path*"
     },
     {
       "source": "/api/webhook",

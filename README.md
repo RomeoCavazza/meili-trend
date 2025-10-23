@@ -1,101 +1,112 @@
-# 🚀 Insider Trends - Trend Intelligence Engine
+# Insider Trends API
 
-**Insider Trends** est une plateforme SaaS qui permet aux marques, agences et créateurs de **détecter plus vite ce qui devient tendance** sur Instagram, TikTok et X, grâce à des données officielles et une interface claire.
+API FastAPI pour l'analyse des tendances sur les réseaux sociaux.
 
-## 🎯 Vision Produit
+## Stack
 
-### **Problème résolu**
-- **Détection tardive** des tendances (24-48h de retard)
-- **Données fragmentées** entre plateformes
-- **Outils complexes** et coûteux
-- **Manque de contexte** sur les créateurs
+- **Backend**: FastAPI + Python 3.11
+- **Database**: PostgreSQL (Railway)
+- **Frontend**: React + TypeScript (Vercel)
+- **Auth**: JWT + OAuth2 (Instagram, Facebook)
 
-### **Solution Insider**
-- **Temps réel** : Ingestion continue via APIs officielles + webhooks
-- **Multi-platform** : Instagram, TikTok, Twitter/X (extensible)
-- **Roadmap IA-native** : RAG system, fine-tuning LLM, scoring algorithmique
-- **Roadmap Enterprise-ready** : Scalabilité Kubernetes, observabilité complète
+## Quick Start
 
-## 🏗️ Architecture Globale
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │   Backend       │    │   External APIs │
-│   React + TS    │◄──►│   FastAPI       │◄──►│   Meta, TikTok  │
-│   Vite + Tailwind│    │   Python 3.11   │    │   X, Google     │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-         │                       │                       │
-         │                       │                       │
-         ▼                       ▼                       ▼
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Vercel        │    │   Railway       │    │   Webhooks      │
-│   Hosting       │    │   PostgreSQL    │    │   Real-time     │
-│   Proxy         │    │   Redis         │    │   Events        │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-```
-
-## 🚀 Quick Start
-
-### **Backend (Railway)**
+### Backend
 ```bash
 cd apps/backend
+python -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
-uvicorn app:app --host 0.0.0.0 --port $PORT
+uvicorn app:app --host 0.0.0.0 --port 8000
 ```
 
-### **Frontend (Vercel)**
+### Frontend
 ```bash
 cd apps/frontend
 npm install
 npm run dev
 ```
 
-### **APIs Principales**
-- `GET /v1/search/posts` - Recherche hashtags Instagram
-- `GET /auth/instagram/start` - OAuth Instagram Business
-- `POST /webhook` - Webhooks Meta
+## API Endpoints
 
-## 📊 Stack Technique
+### Auth
+- `POST /api/v1/auth/register` - Register user
+- `POST /api/v1/auth/login` - Login user
+- `GET /api/v1/auth/me` - Get user profile
 
-| Composant | Technologie | Justification |
-|-----------|------------|---------------|
-| **Backend** | FastAPI + Python 3.11 | API moderne, async, OpenAPI auto |
-| **Frontend** | React 18 + TypeScript + Vite | Stack moderne et performante |
-| **Database** | PostgreSQL (Railway) | Données structurées, relations |
-| **Cache** | Redis | Rate limiting, sessions |
-| **Search** | MeiliSearch | Recherche full-text, facettes |
-| **Auth** | JWT + OAuth2 | Sécurité moderne, multi-providers |
-| **Hosting** | Railway + Vercel | Déploiement simple, scalable |
+### OAuth
+- `GET /api/v1/auth/instagram/start` - Instagram OAuth
+- `GET /api/v1/auth/instagram/callback` - Instagram callback
+- `GET /api/v1/auth/facebook/start` - Facebook OAuth
+- `GET /api/v1/auth/facebook/callback` - Facebook callback
 
-## 🎯 Objectifs App Review
+### System
+- `GET /` - Root
+- `GET /ping` - Health check
+- `GET /docs` - API documentation
 
-- **12 permissions Meta** validées
-- **Interface 100% anglais**
-- **Vidéo démo 60-90s**
-- **Comptes de test** fournis
-- **Guide reviewer** complet
+## Configuration
 
-## 📁 Structure Projet
+```bash
+# Database
+DATABASE_URL=postgresql+psycopg2://user:pass@host:port/db
+
+# JWT
+SECRET_KEY=your-secret-key
+ACCESS_TOKEN_EXPIRE_MINUTES=30
+
+# Instagram OAuth
+IG_APP_ID=your-app-id
+IG_APP_SECRET=your-app-secret
+IG_REDIRECT_URI=https://www.insidr.dev/auth/callback
+
+# Facebook OAuth
+FB_APP_ID=your-app-id
+FB_APP_SECRET=your-app-secret
+FB_REDIRECT_URI=https://www.insidr.dev/auth/facebook/callback
+```
+
+## Project Structure
 
 ```
 insider-monorepo/
 ├── apps/
-│   ├── backend/          # FastAPI + Python
-│   └── frontend/         # React + TypeScript
-├── packages/
-│   └── shared/           # Types partagés
-└── documentation/        # Docs techniques
+│   ├── backend/          # FastAPI app
+│   │   ├── app.py       # Main application
+│   │   ├── core/config.py
+│   │   ├── db/
+│   │   │   ├── base.py
+│   │   │   ├── models.py
+│   │   │   └── migrations/
+│   │   ├── requirements.txt
+│   │   ├── Dockerfile
+│   │   └── railway.toml
+│   └── frontend/         # React app
+│       ├── src/
+│       ├── package.json
+│       └── vercel.json
+└── README.md
 ```
 
-## 🔗 Liens Utiles
+## Development
 
-- **Architecture Backend** : `ARCHITECTURE_BACKEND.md`
-- **Architecture Frontend** : `ARCHITECTURE_FRONTEND.md`
-- **Vue Système** : `ARCHITECTURE_SYSTEME.md`
-- **Sécurité & App Review** : `SECURITY.md`
-- **Stack Technique** : `STACK_TECH.md`
-- **Plan d'Exécution** : `ROADMAP.md`
+### Database migrations
+```bash
+alembic revision --autogenerate -m "Description"
+alembic upgrade head
+```
 
----
+### Test
+```bash
+python -c "from app import app; print('API OK')"
+```
 
-**Insider Trends** - Détectez les tendances avant tout le monde 🚀
+## Deployment
+
+- **Backend**: Railway (auto-deploy on push to main)
+- **Frontend**: Vercel (auto-deploy on push to main)
+
+## Documentation
+
+- API Docs: `https://your-api.railway.app/docs`
+- Frontend: `https://www.insidr.dev`

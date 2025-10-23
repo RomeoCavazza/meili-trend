@@ -1,6 +1,7 @@
 import { SearchParams, SearchResponse } from '@insider/shared/types';
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL || 'https://insidr-production.up.railway.app';
+// Utiliser l'API locale pour les tests
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
 
 export async function searchPosts(params: SearchParams): Promise<SearchResponse> {
   const searchParams = new URLSearchParams();
@@ -27,6 +28,47 @@ export async function searchPosts(params: SearchParams): Promise<SearchResponse>
 }
 
 export async function checkHealth(): Promise<{ status: string }> {
-  const response = await fetch('https://insidr-production.up.railway.app/api/healthz');
+  const response = await fetch(`${API_BASE}/healthz`);
+  return response.json();
+}
+
+// Nouvelles fonctions d'authentification
+export async function login(email: string, password: string) {
+  const response = await fetch(`${API_BASE}/api/v1/auth/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password })
+  });
+  
+  if (!response.ok) {
+    throw new Error('Login failed');
+  }
+  
+  return response.json();
+}
+
+export async function register(email: string, password: string, name?: string) {
+  const response = await fetch(`${API_BASE}/api/v1/auth/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email, password, name })
+  });
+  
+  if (!response.ok) {
+    throw new Error('Registration failed');
+  }
+  
+  return response.json();
+}
+
+export async function getMe(token: string) {
+  const response = await fetch(`${API_BASE}/api/v1/auth/me`, {
+    headers: { 'Authorization': `Bearer ${token}` }
+  });
+  
+  if (!response.ok) {
+    throw new Error('Failed to get user info');
+  }
+  
   return response.json();
 }

@@ -5,21 +5,71 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { User, CreditCard, FileText, AlertCircle } from 'lucide-react';
+import { User, CreditCard, FileText, AlertCircle, LogIn } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { login, register, getMe } from '@/lib/api';
+import { toast } from 'sonner';
 
 const NOTES_STORAGE_KEY = 'insider_business_notes';
 
 export default function Profile() {
   const [notes, setNotes] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [showLogin, setShowLogin] = useState(false);
+  const [loginData, setLoginData] = useState({ email: '', password: '', name: '' });
 
   useEffect(() => {
     const stored = localStorage.getItem(NOTES_STORAGE_KEY);
     if (stored) setNotes(stored);
+    
+    // Vérifier si l'utilisateur est connecté
+    const token = localStorage.getItem('access_token');
+    if (token) {
+      setIsLoggedIn(true);
+      getMe(token).then(setUser).catch(() => {
+        localStorage.removeItem('access_token');
+        setIsLoggedIn(false);
+      });
+    }
   }, []);
 
   const handleSaveNotes = () => {
     localStorage.setItem(NOTES_STORAGE_KEY, notes);
+    toast.success('Notes sauvegardées');
+  };
+
+  const handleLogin = async () => {
+    try {
+      const result = await login(loginData.email, loginData.password);
+      localStorage.setItem('access_token', result.access_token);
+      setIsLoggedIn(true);
+      setUser(result.user);
+      setShowLogin(false);
+      toast.success('Connexion réussie');
+    } catch (error) {
+      toast.error('Erreur de connexion');
+    }
+  };
+
+  const handleRegister = async () => {
+    try {
+      const result = await register(loginData.email, loginData.password, loginData.name);
+      localStorage.setItem('access_token', result.access_token);
+      setIsLoggedIn(true);
+      setUser(result.user);
+      setShowLogin(false);
+      toast.success('Inscription réussie');
+    } catch (error) {
+      toast.error('Erreur d\'inscription');
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('access_token');
+    setIsLoggedIn(false);
+    setUser(null);
+    toast.success('Déconnexion réussie');
   };
 
   return (
@@ -38,17 +88,78 @@ export default function Profile() {
               <User className="h-5 w-5 text-primary" />
               <h2 className="text-xl font-semibold">Informations</h2>
             </div>
-            <div className="space-y-4">
-              <div>
-                <Label>Nom</Label>
-                <Input value="John Doe" disabled />
+            
+            {isLoggedIn && user ? (
+              <div className="space-y-4">
+                <div>
+                  <Label>Nom</Label>
+                  <Input value={user.name || 'Non défini'} disabled />
+                </div>
+                <div>
+                  <Label>Email</Label>
+                  <Input value={user.email} disabled />
+                </div>
+                <div>
+                  <Label>Rôle</Label>
+                  <Input value={user.role} disabled />
+                </div>
+                <Badge variant="outline">Compte connecté</Badge>
+                <Button onClick={handleLogout} variant="outline" className="w-full">
+                  Se déconnecter
+                </Button>
               </div>
-              <div>
-                <Label>Email</Label>
-                <Input value="john@example.com" disabled />
+            ) : (
+              <div className="space-y-4">
+                {!showLogin ? (
+                  <div className="text-center py-8">
+                    <LogIn className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                    <p className="text-muted-foreground mb-4">Connectez-vous pour accéder à votre profil</p>
+                    <Button onClick={() => setShowLogin(true)} className="gradient-primary">
+                      Se connecter / S'inscrire
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <Label>Email</Label>
+                      <Input 
+                        value={loginData.email}
+                        onChange={(e) => setLoginData({...loginData, email: e.target.value})}
+                        placeholder="votre@email.com"
+                      />
+                    </div>
+                    <div>
+                      <Label>Mot de passe</Label>
+                      <Input 
+                        type="password"
+                        value={loginData.password}
+                        onChange={(e) => setLoginData({...loginData, password: e.target.value})}
+                        placeholder="••••••••"
+                      />
+                    </div>
+                    <div>
+                      <Label>Nom (optionnel)</Label>
+                      <Input 
+                        value={loginData.name}
+                        onChange={(e) => setLoginData({...loginData, name: e.target.value})}
+                        placeholder="Votre nom"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={handleLogin} className="flex-1">
+                        Se connecter
+                      </Button>
+                      <Button onClick={handleRegister} variant="outline" className="flex-1">
+                        S'inscrire
+                      </Button>
+                    </div>
+                    <Button onClick={() => setShowLogin(false)} variant="ghost" className="w-full">
+                      Annuler
+                    </Button>
+                  </div>
+                )}
               </div>
-              <Badge variant="outline">Compte démo</Badge>
-            </div>
+            )}
           </Card>
 
           {/* Plans & Billing */}
