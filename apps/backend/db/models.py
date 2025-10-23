@@ -2,8 +2,18 @@
 # Modèles SQLAlchemy pour Insider Trends MVP
 # Architecture fonctionnelle et générique
 
-from sqlalchemy import Column, Integer, String, Text, DateTime, Float, Boolean, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Text, DateTime, Float, Boolean, ForeignKey, UniqueConstraint, JSON
 from sqlalchemy.dialects.postgresql import JSONB, ARRAY
+import os
+
+# Compatibilité SQLite/PostgreSQL
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./insider.db")
+if "sqlite" in DATABASE_URL:
+    JSONType = JSON
+    ArrayType = Text  # SQLite n'a pas de type array natif
+else:
+    JSONType = JSONB
+    ArrayType = ARRAY(String)
 from sqlalchemy.orm import relationship
 from db.base import Base
 import datetime as dt
@@ -42,7 +52,7 @@ class OAuthAccount(Base):
     access_token = Column(Text)
     refresh_token = Column(Text)
     expires_at = Column(DateTime)
-    scopes = Column(ARRAY(String))  # array des scopes accordés
+    scopes = Column(ArrayType)  # array des scopes accordés
     created_at = Column(DateTime, default=dt.datetime.utcnow)
     
     # Relations
@@ -93,8 +103,8 @@ class Post(Base):
     platform_id = Column(Integer, ForeignKey("platforms.id"), nullable=False)
     author = Column(String(255))  # nom d'utilisateur de l'auteur
     caption = Column(Text)  # texte du post
-    hashtags = Column(ARRAY(String))  # liste des hashtags extraits
-    metrics = Column(JSONB)  # métriques: likes, views, comments, shares
+    hashtags = Column(ArrayType)  # liste des hashtags extraits
+    metrics = Column(JSONType)  # métriques: likes, views, comments, shares
     posted_at = Column(DateTime)  # date de publication originale
     fetched_at = Column(DateTime, default=dt.datetime.utcnow)  # date de récupération
     language = Column(String(10))  # langue détectée
@@ -117,8 +127,8 @@ class Report(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     name = Column(String(255), nullable=False)
     created_at = Column(DateTime, default=dt.datetime.utcnow)
-    filters = Column(JSONB)  # filtres appliqués: {"platform":"instagram","hashtag":"ai"}
-    insights = Column(JSONB)  # insights générés: résumé, top posts, stats
+    filters = Column(JSONType)  # filtres appliqués: {"platform":"instagram","hashtag":"ai"}
+    insights = Column(JSONType)  # insights générés: résumé, top posts, stats
     file_url = Column(Text)  # URL du fichier exporté (PDF/PPT)
     
     # Relations
@@ -131,8 +141,8 @@ class Job(Base):
     id = Column(Integer, primary_key=True, index=True)
     type = Column(String(100), nullable=False)  # 'crawl', 'analysis', 'export'
     status = Column(String(50), default='pending')  # 'pending', 'running', 'done', 'failed'
-    params = Column(JSONB)  # paramètres du job
-    result = Column(JSONB)  # résultat du job
+    params = Column(JSONType)  # paramètres du job
+    result = Column(JSONType)  # résultat du job
     created_at = Column(DateTime, default=dt.datetime.utcnow)
     updated_at = Column(DateTime, default=dt.datetime.utcnow, onupdate=dt.datetime.utcnow)
 
@@ -146,7 +156,7 @@ class Alert(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
-    condition = Column(JSONB)  # condition: {"hashtag":"ai","views":">100k"}
+    condition = Column(JSONType)  # condition: {"hashtag":"ai","views":">100k"}
     notified_at = Column(DateTime)
     active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=dt.datetime.utcnow)
@@ -161,7 +171,7 @@ class Subscription(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     plan = Column(String(50), default='free')  # 'free', 'pro', 'enterprise'
-    quota = Column(JSONB)  # quotas: nb d'analyses, hashtags suivis, etc.
+    quota = Column(JSONType)  # quotas: nb d'analyses, hashtags suivis, etc.
     renewed_at = Column(DateTime)
     expires_at = Column(DateTime)
     created_at = Column(DateTime, default=dt.datetime.utcnow)

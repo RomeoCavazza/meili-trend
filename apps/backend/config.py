@@ -15,4 +15,4 @@ IG_REDIRECT_URI = os.getenv("IG_REDIRECT_URI", "https://www.insidr.dev/auth/call
 OAUTH_STATE_SECRET = os.getenv("OAUTH_STATE_SECRET", "change-me")
 
 # Configuration Base de Données PostgreSQL
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://tco:Gnl0bryg@127.0.0.1:5432/insiderdb")
+DATABASE_URL = "postgresql+psycopg2://tco:Gn10bryg@shinkansen.proxy.rlwy.net:26230/railway"
