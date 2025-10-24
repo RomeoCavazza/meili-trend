@@ -7,6 +7,12 @@ import time
 from auth_unified.auth_endpoints import auth_router
 from auth_unified.oauth_endpoints import oauth_router
 
+# Import des modules CRUD
+from posts.posts_endpoints import posts_router
+from hashtags.hashtags_endpoints import hashtags_router
+from platforms.platforms_endpoints import platforms_router
+from analytics.analytics_endpoints import analytics_router
+
 # Import Redis et rate limiting
 from core.redis_client import redis
 from core.ratelimit import setup_rate_limit, limiter
@@ -45,6 +51,10 @@ app.add_middleware(
 # Inclusion des routers
 app.include_router(auth_router)
 app.include_router(oauth_router)
+app.include_router(posts_router)
+app.include_router(hashtags_router)
+app.include_router(platforms_router)
+app.include_router(analytics_router)
 
 # =====================================================
 # ENDPOINTS DE BASE - SIMPLES ET PROPRES

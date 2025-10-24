@@ -65,14 +65,12 @@ CREATE TABLE platforms (
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
--- Hashtags surveillés avec métriques
+-- Hashtags surveillés (simplifié - SANS REDONDANCE)
 CREATE TABLE hashtags (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) UNIQUE NOT NULL,
     platform_id INTEGER NOT NULL REFERENCES platforms(id),
     last_scraped TIMESTAMP,
-    total_posts INTEGER DEFAULT 0,
-    engagement_avg FLOAT DEFAULT 0,
     updated_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -90,6 +88,7 @@ CREATE TABLE posts (
     media_url TEXT,
     sentiment FLOAT CHECK (sentiment >= -1 AND sentiment <= 1),
     score FLOAT DEFAULT 0,
+    score_trend FLOAT DEFAULT 0,  -- Score de tendance calculé
     embedding VECTOR(384),  -- Pour RAG vectoriel futur
     CONSTRAINT posts_platform_id_unique UNIQUE (platform_id, id)
 );
@@ -104,84 +103,13 @@ CREATE TABLE post_hashtags (
 );
 
 -- =====================================================
--- 3. ANALYSES, RAPPORTS & HISTORIQUE
+-- 3. SIMPLIFICATION - SUPPRESSION DES REDONDANCES
 -- =====================================================
-
--- Rapports générés par les utilisateurs
-CREATE TABLE reports (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    name VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW(),
-    filters JSONB,
-    insights JSONB,
-    file_url TEXT
-);
-
--- Tâches en arrière-plan
-CREATE TABLE jobs (
-    id SERIAL PRIMARY KEY,
-    type VARCHAR(100) NOT NULL CHECK (type IN ('crawl', 'analysis', 'export', 'notification', 'cleanup')),
-    status VARCHAR(50) DEFAULT 'pending' CHECK (status IN ('pending', 'running', 'done', 'failed', 'cancelled')),
-    params JSONB,
-    result JSONB,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
-
--- Alertes personnalisées des utilisateurs
-CREATE TABLE alerts (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    condition JSONB,
-    notified_at TIMESTAMP,
-    active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT NOW()
-);
-
--- =====================================================
--- 4. ANALYTICS LONG TERME
--- =====================================================
-
--- Métriques quotidiennes
-CREATE TABLE metrics_daily (
-    id SERIAL PRIMARY KEY,
-    entity_type VARCHAR(50) NOT NULL CHECK (entity_type IN ('hashtag', 'post', 'user')),
-    entity_id TEXT NOT NULL,
-    date DATE NOT NULL,
-    platform_id INTEGER REFERENCES platforms(id),
-    views INTEGER DEFAULT 0,
-    likes INTEGER DEFAULT 0,
-    comments INTEGER DEFAULT 0,
-    shares INTEGER DEFAULT 0,
-    engagement_rate FLOAT DEFAULT 0,
-    created_at TIMESTAMP DEFAULT NOW(),
-    CONSTRAINT uq_metrics_daily_entity_date UNIQUE (entity_type, entity_id, date, platform_id)
-);
-
--- Scores de tendance
-CREATE TABLE scores (
-    id SERIAL PRIMARY KEY,
-    entity_type VARCHAR(50) NOT NULL CHECK (entity_type IN ('hashtag', 'post', 'user')),
-    entity_id TEXT NOT NULL,
-    score_type VARCHAR(50) NOT NULL CHECK (score_type IN ('trend', 'engagement', 'virality', 'sentiment')),
-    value FLOAT NOT NULL,
-    platform_id INTEGER REFERENCES platforms(id),
-    calculated_at TIMESTAMP DEFAULT NOW(),
-    CONSTRAINT uq_scores_entity_type UNIQUE (entity_type, entity_id, score_type, platform_id)
-);
-
--- Logs d'audit
-CREATE TABLE logs (
-    id SERIAL PRIMARY KEY,
-    user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
-    action VARCHAR(100) NOT NULL,
-    payload JSONB,
-    ip_address INET,
-    user_agent TEXT,
-    created_at TIMESTAMP DEFAULT NOW()
-);
+-- Tables supprimées pour éviter les redondances :
+-- - metrics_daily (redondant avec posts.metrics)
+-- - scores (redondant avec posts.score + posts.score_trend)  
+-- - reports, jobs, alerts (fonctionnalités futures)
+-- - logs (pas critique pour MVP)
 
 -- =====================================================
 -- 5. INDEXATION CRITIQUE
@@ -200,52 +128,28 @@ CREATE INDEX idx_oauth_provider ON oauth_accounts(provider);
 -- Index plateformes
 CREATE INDEX idx_platforms_name ON platforms(name);
 
--- Index hashtags
+-- Index hashtags (simplifié)
 CREATE INDEX idx_hashtags_name ON hashtags(name);
 CREATE INDEX idx_hashtags_platform_id ON hashtags(platform_id);
-CREATE INDEX idx_hashtags_updated_at ON hashtags(updated_at);
 
 -- Index posts (optimisés pour requêtes fréquentes)
 CREATE INDEX idx_posts_platform_date ON posts(platform_id, posted_at DESC);
 CREATE INDEX idx_posts_score ON posts(score DESC);
+CREATE INDEX idx_posts_score_trend ON posts(score_trend DESC);
 CREATE INDEX idx_posts_author ON posts(author);
 CREATE INDEX idx_posts_hashtags_gin ON posts USING GIN(hashtags);
 CREATE INDEX idx_posts_metrics_gin ON posts USING GIN(metrics);
 CREATE INDEX idx_posts_sentiment ON posts(sentiment) WHERE sentiment IS NOT NULL;
+CREATE INDEX idx_posts_caption_fts ON posts USING GIN(to_tsvector('french', caption));
+CREATE INDEX idx_posts_posted_at_brin ON posts USING BRIN(posted_at);
 
 -- Index post_hashtags
 CREATE INDEX idx_post_hashtags_post_id ON post_hashtags(post_id);
 CREATE INDEX idx_post_hashtags_hashtag_id ON post_hashtags(hashtag_id);
 
--- Index rapports
-CREATE INDEX idx_reports_user_id ON reports(user_id);
-CREATE INDEX idx_reports_created_at ON reports(created_at);
-
--- Index jobs
-CREATE INDEX idx_jobs_status_type ON jobs(status, type);
-CREATE INDEX idx_jobs_created_at ON jobs(created_at);
-
--- Index alertes
-CREATE INDEX idx_alerts_user_id ON alerts(user_id);
-CREATE INDEX idx_alerts_active ON alerts(active) WHERE active = TRUE;
-
 -- Index abonnements
 CREATE INDEX idx_subscriptions_user_id ON subscriptions(user_id);
 CREATE INDEX idx_subscriptions_plan ON subscriptions(plan);
-
--- Index métriques quotidiennes
-CREATE INDEX idx_metrics_daily_key ON metrics_daily(entity_type, entity_id, date);
-CREATE INDEX idx_metrics_daily_platform ON metrics_daily(platform_id);
-
--- Index scores
-CREATE INDEX idx_scores_entity ON scores(entity_type, entity_id);
-CREATE INDEX idx_scores_type ON scores(score_type);
-CREATE INDEX idx_scores_value ON scores(value DESC);
-
--- Index logs
-CREATE INDEX idx_logs_user_id ON logs(user_id);
-CREATE INDEX idx_logs_action ON logs(action);
-CREATE INDEX idx_logs_created_at ON logs(created_at);
 
 -- =====================================================
 -- 6. TRIGGERS AUTOMATIQUES
@@ -259,7 +163,7 @@ BEGIN
 END; 
 $$ LANGUAGE plpgsql;
 
--- Triggers pour updated_at
+-- Triggers pour updated_at (simplifié)
 CREATE TRIGGER trg_users_updated_at BEFORE UPDATE ON users
 FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
@@ -267,12 +171,6 @@ CREATE TRIGGER trg_platforms_updated_at BEFORE UPDATE ON platforms
 FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 CREATE TRIGGER trg_hashtags_updated_at BEFORE UPDATE ON hashtags
-FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-
-CREATE TRIGGER trg_reports_updated_at BEFORE UPDATE ON reports
-FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-
-CREATE TRIGGER trg_jobs_updated_at BEFORE UPDATE ON jobs
 FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- =====================================================
@@ -307,17 +205,56 @@ RETURNS TABLE (
     author TEXT,
     caption TEXT,
     score FLOAT,
+    score_trend FLOAT,
     posted_at TIMESTAMP
 ) AS $$
 BEGIN
     RETURN QUERY
-    SELECT p.id, p.author, p.caption, p.score, p.posted_at
+    SELECT p.id, p.author, p.caption, p.score, p.score_trend, p.posted_at
     FROM posts p
     JOIN platforms pl ON p.platform_id = pl.id
     WHERE (platform_name IS NULL OR pl.name = platform_name)
-    AND p.score > 0
-    ORDER BY p.score DESC, p.posted_at DESC
+    AND p.score_trend > 0
+    ORDER BY p.score_trend DESC, p.posted_at DESC
     LIMIT limit_count;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Fonction pour calculer le score de tendance
+CREATE OR REPLACE FUNCTION calculate_trend_score(post_id TEXT)
+RETURNS FLOAT AS $$
+DECLARE
+    trend_score FLOAT;
+    current_engagement FLOAT;
+    historical_avg FLOAT;
+BEGIN
+    -- Calculer l'engagement actuel
+    SELECT COALESCE(
+        (metrics->>'likes')::INTEGER + 
+        (metrics->>'comments')::INTEGER + 
+        (metrics->>'shares')::INTEGER, 0
+    ) INTO current_engagement
+    FROM posts WHERE id = post_id;
+    
+    -- Calculer la moyenne historique (7 derniers jours)
+    SELECT COALESCE(AVG(
+        (metrics->>'likes')::INTEGER + 
+        (metrics->>'comments')::INTEGER + 
+        (metrics->>'shares')::INTEGER
+    ), 0) INTO historical_avg
+    FROM posts 
+    WHERE platform_id = (SELECT platform_id FROM posts WHERE id = post_id)
+    AND posted_at > NOW() - INTERVAL '7 days'
+    AND posted_at < (SELECT posted_at FROM posts WHERE id = post_id);
+    
+    -- Calculer le score de tendance
+    IF historical_avg > 0 THEN
+        trend_score := current_engagement / historical_avg;
+    ELSE
+        trend_score := 0;
+    END IF;
+    
+    RETURN trend_score;
 END;
 $$ LANGUAGE plpgsql;
 
@@ -331,15 +268,12 @@ SELECT p.*, pl.name AS platform_name
 FROM posts p 
 JOIN platforms pl ON pl.id = p.platform_id;
 
--- Vue hashtags avec statistiques
+-- Vue hashtags avec statistiques (simplifiée)
 CREATE OR REPLACE VIEW hashtags_with_stats AS
-SELECT h.*, COALESCE(md.views,0) AS actual_posts_count
+SELECT h.*, COUNT(p.id) AS actual_posts_count
 FROM hashtags h
-LEFT JOIN LATERAL (
-  SELECT SUM(views)::bigint AS views
-  FROM metrics_daily
-  WHERE entity_type = 'hashtag' AND entity_id = h.id::text
-) md ON TRUE;
+LEFT JOIN posts p ON p.hashtags @> ARRAY[h.name]
+GROUP BY h.id, h.name, h.platform_id, h.last_scraped, h.updated_at;
 
 -- =====================================================
 -- 9. DONNÉES DE BASE
@@ -365,13 +299,7 @@ INSERT INTO users (email, password_hash, name, role) VALUES
 COMMENT ON TABLE users IS 'Utilisateurs principaux du système Insider Trends';
 COMMENT ON TABLE oauth_accounts IS 'Comptes OAuth liés aux utilisateurs';
 COMMENT ON TABLE platforms IS 'Plateformes sociales supportées';
-COMMENT ON TABLE hashtags IS 'Hashtags surveillés avec métriques';
+COMMENT ON TABLE hashtags IS 'Hashtags surveillés (simplifié)';
 COMMENT ON TABLE posts IS 'Posts des réseaux sociaux avec métriques et scores';
 COMMENT ON TABLE post_hashtags IS 'Table de liaison posts-hashtags';
-COMMENT ON TABLE reports IS 'Rapports générés par les utilisateurs';
-COMMENT ON TABLE jobs IS 'Tâches en arrière-plan';
-COMMENT ON TABLE alerts IS 'Alertes personnalisées des utilisateurs';
 COMMENT ON TABLE subscriptions IS 'Abonnements et quotas utilisateur';
-COMMENT ON TABLE metrics_daily IS 'Métriques quotidiennes pour séries temporelles';
-COMMENT ON TABLE scores IS 'Scores de tendance et engagement';
-COMMENT ON TABLE logs IS 'Logs d''audit pour conformité';
