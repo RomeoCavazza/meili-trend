@@ -67,7 +67,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(access_token);
       setUser(userData);
       
-      navigate('/analytics');
+      // Rediriger vers la page demandée ou /analytics par défaut
+      const redirectTo = sessionStorage.getItem('redirectAfterLogin') || '/analytics';
+      sessionStorage.removeItem('redirectAfterLogin');
+      window.location.href = redirectTo;
+      
       return { error: null };
     } catch (error: any) {
       return { error };
@@ -83,7 +87,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(access_token);
       setUser(userData);
       
-      navigate('/analytics');
+      // Rediriger vers la page demandée ou /analytics par défaut
+      const redirectTo = sessionStorage.getItem('redirectAfterLogin') || '/analytics';
+      sessionStorage.removeItem('redirectAfterLogin');
+      window.location.href = redirectTo;
+      
       return { error: null };
     } catch (error: any) {
       return { error };
