@@ -3,8 +3,8 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# Utiliser psycopg au lieu de psycopg2
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://postgres:tKxmfViifAQcuxWJGbqxMHfshknwsVey@tramway.proxy.rlwy.net:49049/railway")
+# Utiliser SQLite pour le développement local
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./test.db")
 
 engine = create_engine(
     DATABASE_URL,

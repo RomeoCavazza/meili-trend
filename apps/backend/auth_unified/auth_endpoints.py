@@ -3,7 +3,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from db.base import get_db
 from db.models import User
-from .schemas import UserCreate, UserResponse, TokenResponse
+from .schemas import UserCreate, UserResponse, TokenResponse, LoginRequest
 from .auth_service import AuthService
 
 auth_router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
@@ -40,7 +40,7 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)):
     return auth_service.register_user(user_in, db)
 
 @auth_router.post("/login", response_model=TokenResponse)
-def login(user_in: UserCreate, db: Session = Depends(get_db)):
+def login(user_in: LoginRequest, db: Session = Depends(get_db)):
     """Connexion simple"""
     return auth_service.login_user(user_in, db)
 

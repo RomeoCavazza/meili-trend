@@ -6,7 +6,7 @@ import path from "path";
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 8080,
+    port: 8081,
     proxy: {
       '/api/healthz': {
         target: 'https://insidr-production.up.railway.app',
@@ -17,8 +17,8 @@ export default defineConfig(({ mode }) => ({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/api\/backend/, ''),
       },
-      '/auth': {
-        target: 'https://insidr-production.up.railway.app',
+      '/api/v1/auth': {
+        target: 'http://localhost:8000',
         changeOrigin: true,
       },
       '/api/webhook': {

@@ -114,11 +114,11 @@ class OAuthService:
             # Créer le token JWT
             access_token = self.auth_service.create_access_token(data={"sub": str(user.id)})
             
-            return TokenResponse(
-                access_token=access_token,
-                token_type="bearer",
-                user=user
-            )
+            # Rediriger vers le frontend localhost avec le token (comme Google OAuth)
+            from fastapi.responses import RedirectResponse
+            frontend_url = "http://localhost:8081/auth/callback"
+            redirect_url = f"{frontend_url}?token={access_token}&user_id={user.id}&email={user.email}&name={user.name}"
+            return RedirectResponse(url=redirect_url)
         
         raise HTTPException(status_code=400, detail="Erreur OAuth Instagram")
     
@@ -194,3 +194,84 @@ class OAuthService:
                 )
         
         raise HTTPException(status_code=400, detail="Erreur OAuth Facebook")
+    
+    def start_google_auth(self) -> Dict[str, str]:
+        """Démarrer le processus OAuth Google"""
+        if not settings.GOOGLE_CLIENT_ID:
+            raise HTTPException(status_code=500, detail="GOOGLE_CLIENT_ID non configuré")
+        
+        client_id = settings.GOOGLE_CLIENT_ID
+        redirect_uri = settings.GOOGLE_REDIRECT_URI
+        
+        state = str(int(time.time()))
+        scopes = "openid email profile"
+        
+        params = {
+            "client_id": client_id,
+            "redirect_uri": redirect_uri,
+            "response_type": "code",
+            "scope": scopes,
+            "state": state,
+            "access_type": "offline",
+            "prompt": "consent"
+        }
+        
+        auth_url = "https://accounts.google.com/o/oauth2/v2/auth?" + "&".join([f"{k}={v}" for k, v in params.items()])
+        
+        return {
+            "auth_url": auth_url,
+            "state": state
+        }
+    
+    async def handle_google_callback(self, code: str, state: str, db: Session) -> TokenResponse:
+        """Gérer le callback OAuth Google"""
+        if not settings.GOOGLE_CLIENT_SECRET:
+            raise HTTPException(status_code=500, detail="GOOGLE_CLIENT_SECRET non configuré")
+        
+        client_id = settings.GOOGLE_CLIENT_ID
+        client_secret = settings.GOOGLE_CLIENT_SECRET
+        redirect_uri = settings.GOOGLE_REDIRECT_URI
+        
+        async with httpx.AsyncClient(timeout=20) as client:
+            # 1) Access token
+            r = await client.post(
+                "https://oauth2.googleapis.com/token",
+                data={
+                    "client_id": client_id,
+                    "client_secret": client_secret,
+                    "redirect_uri": redirect_uri,
+                    "code": code,
+                    "grant_type": "authorization_code"
+                }
+            )
+            r.raise_for_status()
+            token_data = r.json()
+            access_token = token_data.get("access_token")
+            
+            # 2) User info
+            r2 = await client.get(
+                "https://www.googleapis.com/oauth2/v2/userinfo",
+                headers={"Authorization": f"Bearer {access_token}"}
+            )
+            r2.raise_for_status()
+            user_info = r2.json()
+            
+            google_user_id = user_info.get("id")
+            email = user_info.get("email")
+            name = user_info.get("name")
+            
+            if access_token and google_user_id:
+                # Créer ou récupérer l'utilisateur
+                user = self.create_or_get_user(db, email=email, name=name)
+                
+                # Créer le token JWT
+                jwt_token = self.auth_service.create_access_token(data={"sub": str(user.id)})
+                
+                # Rediriger vers le frontend avec le token
+                from fastapi.responses import RedirectResponse
+                frontend_url = "http://localhost:8081/auth/callback"
+                redirect_url = f"{frontend_url}?token={jwt_token}&user_id={user.id}&email={email}&name={name}"
+                return RedirectResponse(url=redirect_url)
+        
+        raise HTTPException(status_code=400, detail="Erreur OAuth Google")
+    

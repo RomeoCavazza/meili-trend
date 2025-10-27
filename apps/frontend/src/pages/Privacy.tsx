@@ -1,52 +1,127 @@
-import { Card } from '@/components/ui/card';
+import { Navbar } from '@/components/Navbar';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
 export default function Privacy() {
   return (
-    <main className="flex-1 container mx-auto px-4 py-8 max-w-4xl">
-        <Card className="p-8">
-          <h1 className="text-3xl font-bold mb-6">Politique de confidentialité</h1>
-          
-          <div className="prose prose-invert max-w-none space-y-6">
-            <section>
-              <h2 className="text-xl font-semibold mb-3">1. Données collectées</h2>
-              <p className="text-muted-foreground">
-                Insider Trends collecte uniquement les données publiques Instagram via l'API officielle.
-                Nous ne stockons pas de données personnelles sans consentement explicite.
-              </p>
-            </section>
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      
+      <div className="container py-8">
+        <div className="max-w-4xl mx-auto space-y-8">
+        <div>
+          <h1 className="text-4xl font-bold tracking-tight">Privacy Policy</h1>
+          <p className="text-muted-foreground mt-2">Last updated: January 22, 2025</p>
+        </div>
 
-            <section>
-              <h2 className="text-xl font-semibold mb-3">2. Utilisation des données</h2>
-              <p className="text-muted-foreground">
-                Les données sont utilisées pour fournir des analyses de tendances et des fonctionnalités
-                de recherche. Nous ne vendons ni ne partageons vos données avec des tiers.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-semibold mb-3">3. Cookies</h2>
-              <p className="text-muted-foreground">
-                Nous utilisons des cookies essentiels pour le fonctionnement du service.
-                Aucun cookie de tracking tiers n'est utilisé.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-semibold mb-3">4. Vos droits</h2>
-              <p className="text-muted-foreground">
-                Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et de suppression
-                de vos données. Contactez-nous pour exercer ces droits.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-semibold mb-3">5. Contact</h2>
-              <p className="text-muted-foreground">
-                Pour toute question concernant cette politique : contact@insider-trends.com
-              </p>
-            </section>
-          </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>1. Data Collection</CardTitle>
+          </CardHeader>
+          <CardContent className="prose prose-sm max-w-none">
+            <p>
+              Insider Trends ("we", "our", or "us") collects and processes Instagram public data through
+              authorized Meta Graph API endpoints. We only collect data you explicitly authorize us to access.
+            </p>
+            <h4>Data We Collect:</h4>
+            <ul>
+              <li>Public Instagram posts and hashtag data</li>
+              <li>Page metadata (likes, followers, engagement metrics)</li>
+              <li>User-generated content on connected Pages (comments, ratings)</li>
+              <li>Account profile information (username, bio, profile picture)</li>
+              <li>Analytics insights (aggregated and anonymized)</li>
+            </ul>
+          </CardContent>
         </Card>
-      </main>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>2. How We Use Your Data</CardTitle>
+          </CardHeader>
+          <CardContent className="prose prose-sm max-w-none">
+            <p>We use collected data to:</p>
+            <ul>
+              <li>Provide trend intelligence and analytics services</li>
+              <li>Generate insights for marketing and advertising purposes</li>
+              <li>Improve our application and user experience</li>
+              <li>Aggregate and anonymize data for research purposes</li>
+            </ul>
+            <p className="font-semibold mt-4">
+              We do NOT use your data for individual profiling or re-identification purposes.
+              All analytics insights are aggregated, de-identified, and anonymized.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>3. Data Storage & Security</CardTitle>
+          </CardHeader>
+          <CardContent className="prose prose-sm max-w-none">
+            <p>
+              We implement industry-standard security measures to protect your data:
+            </p>
+            <ul>
+              <li>Encrypted data transmission (HTTPS/TLS)</li>
+              <li>Secure cloud infrastructure with access controls</li>
+              <li>Regular security audits and updates</li>
+              <li>Limited data retention (90 days default)</li>
+            </ul>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>4. Third-Party Services</CardTitle>
+          </CardHeader>
+          <CardContent className="prose prose-sm max-w-none">
+            <p>
+              We integrate with Meta's Instagram Graph API and comply with Meta's Platform Terms
+              and Developer Policies. We do not share your personal data with third parties
+              except as required to provide our services or comply with legal obligations.
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>5. Your Rights (GDPR Compliance)</CardTitle>
+          </CardHeader>
+          <CardContent className="prose prose-sm max-w-none">
+            <p>You have the right to:</p>
+            <ul>
+              <li><strong>Access:</strong> Request a copy of your data</li>
+              <li><strong>Rectification:</strong> Correct inaccurate data</li>
+              <li><strong>Erasure:</strong> Request deletion of your data</li>
+              <li><strong>Restriction:</strong> Limit processing of your data</li>
+              <li><strong>Portability:</strong> Receive your data in a structured format</li>
+              <li><strong>Objection:</strong> Object to data processing</li>
+            </ul>
+            <p className="mt-4">
+              To exercise these rights, visit our{' '}
+              <a href="/data-deletion" className="text-primary hover:underline">
+                Data Deletion page
+              </a>{' '}
+              or contact us at privacy@insidertrends.com
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>6. Contact Us</CardTitle>
+          </CardHeader>
+          <CardContent className="prose prose-sm max-w-none">
+            <p>
+              For privacy-related questions or concerns:
+            </p>
+            <ul>
+              <li>Email: privacy@insidertrends.com</li>
+              <li>Data Deletion Requests: <a href="/data-deletion" className="text-primary hover:underline">/data-deletion</a></li>
+            </ul>
+          </CardContent>
+        </Card>
+        </div>
+      </div>
+    </div>
   );
 }

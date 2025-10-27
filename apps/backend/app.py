@@ -34,6 +34,7 @@ app.add_middleware(
         "https://next-insider.vercel.app",
         "http://localhost:3000",  # Dev uniquement
         "http://localhost:5173",  # Dev uniquement
+        "http://localhost:8081",  # Dev uniquement - Frontend Insider
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -61,9 +62,8 @@ app.include_router(analytics_router)
 # =====================================================
 
 @app.get("/")
-@limiter.limit("10/minute")
-def root(request):
-    """Endpoint racine - Rate limited"""
+def root():
+    """Endpoint racine - pas de rate limit (health check)"""
     return {
         "message": "Insider Trends API",
         "version": "2.0.0",
@@ -72,15 +72,13 @@ def root(request):
     }
 
 @app.get("/ping")
-@limiter.limit("30/minute")
-def ping(request):
-    """Health check simple - Rate limited"""
+def ping():
+    """Health check simple - pas de rate limit"""
     return {"pong": True, "timestamp": int(time.time())}
 
 @app.get("/healthz")
-@limiter.limit("60/minute")
-def healthz(request):
-    """Health check Kubernetes - Rate limited"""
+def healthz():
+    """Health check Kubernetes - pas de rate limit"""
     return {"status": "ok", "message": "API running"}
 
 # =====================================================

@@ -8,9 +8,9 @@ from sqlalchemy.orm import relationship
 from db.base import Base
 import datetime as dt
 
-# Utiliser JSONB pour PostgreSQL
-JSONType = JSONB
-ArrayType = ARRAY(String)
+# Utiliser Text pour SQLite (compatible avec PostgreSQL aussi)
+JSONType = Text
+ArrayType = Text
 
 # =====================================================
 # 1. UTILISATEURS & AUTHENTIFICATION

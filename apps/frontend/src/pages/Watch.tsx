@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useWatchlist } from '@/contexts/WatchlistContext';
+import { useWatchlist, WatchItem } from '@/contexts/WatchlistContext';
 import { Eye, Trash2, FileText, Hash, User, Tag, Search, TrendingUp } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { format } from 'date-fns';

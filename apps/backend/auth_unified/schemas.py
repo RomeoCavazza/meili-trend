@@ -7,29 +7,24 @@ from typing import Optional
 import re
 
 class UserCreate(BaseModel):
-    """Schéma pour la création d'utilisateur - VALIDATION STRICTE"""
+    """Schéma pour la création d'utilisateur - VALIDATION RELÂCHÉE POUR DEV"""
     email: EmailStr = Field(..., description="Email valide requis")
-    password: str = Field(..., min_length=8, max_length=128, description="Mot de passe entre 8 et 128 caractères")
-    name: str = Field(..., min_length=2, max_length=100, description="Nom entre 2 et 100 caractères")
+    password: str = Field(..., min_length=6, max_length=128, description="Mot de passe (min 6 caractères)")
+    name: str = Field(..., min_length=1, max_length=100, description="Nom (min 1 caractère)")
     
     @validator('password')
     def validate_password(cls, v):
-        """Validation stricte du mot de passe"""
-        if not re.search(r'[A-Z]', v):
-            raise ValueError('Le mot de passe doit contenir au moins une majuscule')
-        if not re.search(r'[a-z]', v):
-            raise ValueError('Le mot de passe doit contenir au moins une minuscule')
-        if not re.search(r'\d', v):
-            raise ValueError('Le mot de passe doit contenir au moins un chiffre')
-        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
-            raise ValueError('Le mot de passe doit contenir au moins un caractère spécial')
+        """Validation minimale du mot de passe - RELÂCHÉE POUR DEV"""
+        # En production, réactiver les validations strictes
+        if len(v) < 6:
+            raise ValueError('Le mot de passe doit contenir au moins 6 caractères')
         return v
     
     @validator('name')
     def validate_name(cls, v):
-        """Validation du nom"""
-        if not re.match(r'^[a-zA-Z\s\-\.]+$', v):
-            raise ValueError('Le nom ne peut contenir que des lettres, espaces, tirets et points')
+        """Validation minimal du nom"""
+        if len(v.strip()) < 1:
+            raise ValueError('Le nom ne peut pas être vide')
         return v.strip()
 
 class UserResponse(BaseModel):
@@ -43,6 +38,11 @@ class UserResponse(BaseModel):
     
     class Config:
         from_attributes = True
+
+class LoginRequest(BaseModel):
+    """Schéma pour la connexion - sans validation stricte"""
+    email: EmailStr = Field(..., description="Email valide requis")
+    password: str = Field(..., min_length=6, description="Mot de passe (min 6 caractères)")
 
 class TokenResponse(BaseModel):
     """Schéma pour la réponse de token - SÉCURISÉ"""

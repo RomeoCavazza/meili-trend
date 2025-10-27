@@ -1,259 +1,314 @@
-import { useState, useEffect } from 'react';
-import { Card } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { Navbar } from '@/components/Navbar';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { User, CreditCard, FileText, AlertCircle, LogIn } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { login, register, getMe } from '@/lib/api';
-import { toast } from 'sonner';
-
-const NOTES_STORAGE_KEY = 'insider_business_notes';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { connectedPages, type ConnectedPage } from '@/lib/mockData';
+import { useAuth } from '@/contexts/AuthContext';
+import { User, Settings, CheckCircle2, Facebook, Instagram, Link as LinkIcon, LogOut } from 'lucide-react';
 
 export default function Profile() {
-  const [notes, setNotes] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState<any>(null);
-  const [showLogin, setShowLogin] = useState(false);
-  const [loginData, setLoginData] = useState({ email: '', password: '', name: '' });
-
-  useEffect(() => {
-    const stored = localStorage.getItem(NOTES_STORAGE_KEY);
-    if (stored) setNotes(stored);
-    
-    // Vérifier si l'utilisateur est connecté
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      setIsLoggedIn(true);
-      getMe(token).then(setUser).catch(() => {
-        localStorage.removeItem('access_token');
-        setIsLoggedIn(false);
-      });
-    }
-  }, []);
-
-  const handleSaveNotes = () => {
-    localStorage.setItem(NOTES_STORAGE_KEY, notes);
-    toast.success('Notes sauvegardées');
-  };
-
-  const handleLogin = async () => {
-    try {
-      const result = await login(loginData.email, loginData.password);
-      localStorage.setItem('access_token', result.access_token);
-      setIsLoggedIn(true);
-      setUser(result.user);
-      setShowLogin(false);
-      toast.success('Connexion réussie');
-    } catch (error) {
-      toast.error('Erreur de connexion');
-    }
-  };
-
-  const handleRegister = async () => {
-    try {
-      const result = await register(loginData.email, loginData.password, loginData.name);
-      localStorage.setItem('access_token', result.access_token);
-      setIsLoggedIn(true);
-      setUser(result.user);
-      setShowLogin(false);
-      toast.success('Inscription réussie');
-    } catch (error) {
-      toast.error('Erreur d\'inscription');
-    }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    setIsLoggedIn(false);
-    setUser(null);
-    toast.success('Déconnexion réussie');
+  const { user, signOut } = useAuth();
+  
+  // Mock data for instagram_basic permission
+  const accountInfo = {
+    username: '@insidertrends_official',
+    full_name: user?.name || 'Insider Trends',
+    email: user?.email || '',
+    bio: 'Professional Instagram Analytics Platform 📊 | Helping marketers discover trends 🚀 | Trusted by 2,800+ agencies',
+    website: 'https://insidertrends.com',
+    followers: '45.2K',
+    following: '892',
+    posts: '1,247',
+    account_type: 'Business',
+    verified: true,
+    profile_picture: user?.email || 'https://api.dicebear.com/7.x/shapes/svg?seed=insidertrends',
   };
 
   return (
-    <main className="flex-1 container mx-auto px-4 py-8 max-w-4xl">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Profil</h1>
-          <p className="text-muted-foreground">
-            Gérez vos informations et paramètres de compte.
-          </p>
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      
+      <div className="container py-8">
+        <div className="space-y-8">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-bold tracking-tight">Profile</h1>
+            <p className="text-muted-foreground mt-2">
+              Manage your connected Instagram Business accounts and Facebook Pages.
+            </p>
+          </div>
+          <Button variant="outline" onClick={signOut} className="gap-2">
+            <LogOut className="h-4 w-4" />
+            Sign Out
+          </Button>
         </div>
 
-        <div className="space-y-6">
-          {/* User Info */}
-          <Card className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <User className="h-5 w-5 text-primary" />
-              <h2 className="text-xl font-semibold">Informations</h2>
-            </div>
-            
-            {isLoggedIn && user ? (
-              <div className="space-y-4">
-                <div>
-                  <Label>Nom</Label>
-                  <Input value={user.name || 'Non défini'} disabled />
-                </div>
-                <div>
-                  <Label>Email</Label>
-                  <Input value={user.email} disabled />
-                </div>
-                <div>
-                  <Label>Rôle</Label>
-                  <Input value={user.role} disabled />
-                </div>
-                <Badge variant="outline">Compte connecté</Badge>
-                <Button onClick={handleLogout} variant="outline" className="w-full">
-                  Se déconnecter
-                </Button>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {!showLogin ? (
-                  <div className="text-center py-8">
-                    <LogIn className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-muted-foreground mb-4">Connectez-vous pour accéder à votre profil</p>
-                    <Button onClick={() => setShowLogin(true)} className="gradient-primary">
-                      Se connecter / S'inscrire
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div>
-                      <Label>Email</Label>
-                      <Input 
-                        value={loginData.email}
-                        onChange={(e) => setLoginData({...loginData, email: e.target.value})}
-                        placeholder="votre@email.com"
-                      />
-                    </div>
-                    <div>
-                      <Label>Mot de passe</Label>
-                      <Input 
-                        type="password"
-                        value={loginData.password}
-                        onChange={(e) => setLoginData({...loginData, password: e.target.value})}
-                        placeholder="••••••••"
-                      />
-                    </div>
-                    <div>
-                      <Label>Nom (optionnel)</Label>
-                      <Input 
-                        value={loginData.name}
-                        onChange={(e) => setLoginData({...loginData, name: e.target.value})}
-                        placeholder="Votre nom"
-                      />
-                    </div>
-                    <div className="flex gap-2">
-                      <Button onClick={handleLogin} className="flex-1">
-                        Se connecter
-                      </Button>
-                      <Button onClick={handleRegister} variant="outline" className="flex-1">
-                        S'inscrire
-                      </Button>
-                    </div>
-                    <Button onClick={() => setShowLogin(false)} variant="ghost" className="w-full">
-                      Annuler
-                    </Button>
-                  </div>
-                )}
-              </div>
-            )}
-          </Card>
+        {/* Social Connections */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Connect Social Accounts</CardTitle>
+            <CardDescription>
+              Link your Instagram, TikTok, and X accounts to access all features
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <p className="text-muted-foreground">Connectez vos comptes sociaux pour accéder à toutes les fonctionnalités.</p>
+          </CardContent>
+        </Card>
 
-          {/* Plans & Billing */}
-          <Card className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <CreditCard className="h-5 w-5 text-primary" />
-              <h2 className="text-xl font-semibold">Plans & Facturation</h2>
-            </div>
-            <div className="space-y-4">
-              <div className="grid md:grid-cols-3 gap-4">
-                {['Starter', 'Pro', 'Enterprise'].map((plan, i) => (
-                  <Card
-                    key={plan}
-                    className={`p-4 ${
-                      i === 1 ? 'border-primary shadow-glow' : ''
-                    }`}
-                  >
-                    <h3 className="font-semibold mb-2">{plan}</h3>
-                    <p className="text-2xl font-bold mb-1">
-                      {i === 0 ? '49€' : i === 1 ? '99€' : '249€'}
-                      <span className="text-sm font-normal text-muted-foreground">
-                        /mois
-                      </span>
-                    </p>
-                    <p className="text-xs text-muted-foreground mb-4">
-                      {i === 0
-                        ? '1000 recherches/mois'
-                        : i === 1
-                        ? '10000 recherches/mois'
-                        : 'Illimité'}
-                    </p>
-                    <Button
-                      variant={i === 1 ? 'default' : 'outline'}
-                      className={i === 1 ? 'gradient-primary w-full' : 'w-full'}
-                      disabled
+        {/* Tabs */}
+        <Tabs defaultValue="account" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="account">
+              <User className="h-4 w-4 mr-2" />
+              Account Info
+            </TabsTrigger>
+            <TabsTrigger value="pages">
+              <Facebook className="h-4 w-4 mr-2" />
+              Connected Pages
+            </TabsTrigger>
+            <TabsTrigger value="settings">
+              <Settings className="h-4 w-4 mr-2" />
+              Settings
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Account Info Tab - instagram_basic */}
+          <TabsContent value="account" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Instagram Business Account</CardTitle>
+                <CardDescription>
+                  Basic metadata from your Instagram Business account (instagram_basic permission)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-6">
+                  <div className="flex-shrink-0">
+                    <img
+                      src={accountInfo.profile_picture}
+                      alt={accountInfo.username}
+                      className="w-24 h-24 rounded-full border-4 border-primary"
+                    />
+                  </div>
+
+                  <div className="flex-1 space-y-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-2xl font-bold">{accountInfo.full_name}</h3>
+                        {accountInfo.verified && (
+                          <CheckCircle2 className="h-6 w-6 text-primary" />
+                        )}
+                      </div>
+                      <p className="text-muted-foreground">{accountInfo.username}</p>
+                      <Badge variant="secondary" className="mt-2">
+                        {accountInfo.account_type} Account
+                      </Badge>
+                    </div>
+
+                    <p className="text-sm">{accountInfo.bio}</p>
+
+                    <div className="flex items-center gap-2 text-sm text-primary">
+                      <LinkIcon className="h-4 w-4" />
+                      <a href={accountInfo.website} target="_blank" rel="noopener noreferrer" className="hover:underline">
+                        {accountInfo.website}
+                      </a>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4 pt-4 border-t">
+                      <div className="text-center">
+                        <p className="text-2xl font-bold">{accountInfo.posts}</p>
+                        <p className="text-sm text-muted-foreground">Posts</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold">{accountInfo.followers}</p>
+                        <p className="text-sm text-muted-foreground">Followers</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="text-2xl font-bold">{accountInfo.following}</p>
+                        <p className="text-sm text-muted-foreground">Following</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Account Details */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Account Details</CardTitle>
+                <CardDescription>
+                  Detailed information from Instagram Graph API
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4">
+                  <div className="flex justify-between items-center p-3 rounded-lg border">
+                    <span className="text-sm font-medium">Account ID</span>
+                    <span className="text-sm text-muted-foreground">17841400000000000</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 rounded-lg border">
+                    <span className="text-sm font-medium">Username</span>
+                    <span className="text-sm text-muted-foreground">{accountInfo.username}</span>
+                  </div>
+                  <div className="flex justify-between items-center p-3 rounded-lg border">
+                    <span className="text-sm font-medium">Account Type</span>
+                    <Badge variant="secondary">{accountInfo.account_type}</Badge>
+                  </div>
+                  <div className="flex justify-between items-center p-3 rounded-lg border">
+                    <span className="text-sm font-medium">Verification Status</span>
+                    {accountInfo.verified ? (
+                      <Badge variant="default" className="bg-success">Verified</Badge>
+                    ) : (
+                      <Badge variant="secondary">Not Verified</Badge>
+                    )}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Connected Pages Tab - pages_show_list */}
+          <TabsContent value="pages" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Connected Facebook Pages</CardTitle>
+                <CardDescription>
+                  List of Pages you manage (pages_show_list permission)
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-4">
+                  {connectedPages.map((page) => (
+                    <div
+                      key={page.id}
+                      className="flex items-center justify-between p-4 rounded-lg border hover:border-primary transition-colors"
                     >
-                      {i === 1 ? 'Plan actuel' : 'Choisir'}
-                    </Button>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          </Card>
+                      <div className="flex items-center gap-4">
+                        <img
+                          src={page.profile_picture}
+                          alt={page.name}
+                          className="w-16 h-16 rounded-lg"
+                        />
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <p className="font-semibold">{page.name}</p>
+                            {page.verified && (
+                              <CheckCircle2 className="h-4 w-4 text-primary" />
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground">{page.username}</p>
+                          <div className="flex items-center gap-3 mt-1">
+                            <Badge variant="secondary" className="text-xs">
+                              {page.category}
+                            </Badge>
+                            <span className="text-xs text-muted-foreground">
+                              {page.followers} followers
+                            </span>
+                          </div>
+                        </div>
+                      </div>
 
-          {/* Bank Details */}
-          <Card className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <CreditCard className="h-5 w-5 text-primary" />
-              <h2 className="text-xl font-semibold">Données bancaires</h2>
-            </div>
-            <Alert className="mb-4">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                Désactivé pour le MVP — affichage démo uniquement. Aucune donnée réelle n'est stockée.
-              </AlertDescription>
-            </Alert>
-            <div className="space-y-4 opacity-50">
-              <div>
-                <Label>Numéro de carte</Label>
-                <Input value="**** **** **** 1234" disabled />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Date d'expiration</Label>
-                  <Input value="12/25" disabled />
+                      <div className="flex items-center gap-2">
+                        <Badge variant="default" className="bg-success">
+                          <Instagram className="h-3 w-3 mr-1" />
+                          Connected
+                        </Badge>
+                        <Button variant="outline" size="sm">
+                          Manage
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <div>
-                  <Label>CVV</Label>
-                  <Input value="***" disabled />
-                </div>
-              </div>
-            </div>
-          </Card>
 
-          {/* Business Notes */}
-          <Card className="p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <FileText className="h-5 w-5 text-primary" />
-              <h2 className="text-xl font-semibold">Business Plan / Notes</h2>
-            </div>
-            <div className="space-y-4">
-              <Textarea
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Notez vos idées, stratégies, objectifs..."
-                rows={8}
-                className="resize-none"
-              />
-              <Button onClick={handleSaveNotes} className="gradient-primary">
-                Enregistrer les notes
-              </Button>
-            </div>
-          </Card>
+                <Button className="w-full mt-4" variant="outline">
+                  <Facebook className="h-4 w-4 mr-2" />
+                  Connect Another Page
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Page Permissions */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Page Permissions</CardTitle>
+                <CardDescription>
+                  Current permissions granted to Insider Trends
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-3">
+                  {[
+                    'pages_show_list',
+                    'pages_read_engagement',
+                    'pages_read_user_content',
+                    'instagram_basic',
+                    'instagram_manage_insights',
+                  ].map((permission) => (
+                    <div key={permission} className="flex items-center justify-between p-3 rounded-lg border">
+                      <span className="text-sm font-mono">{permission}</span>
+                      <Badge variant="default" className="bg-success">Granted</Badge>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Account Settings</CardTitle>
+                <CardDescription>Manage your account preferences</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex items-center justify-between p-3 rounded-lg border">
+                  <div>
+                    <p className="font-medium">Email Notifications</p>
+                    <p className="text-sm text-muted-foreground">Receive updates about your analytics</p>
+                  </div>
+                  <Badge variant="default">Enabled</Badge>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg border">
+                  <div>
+                    <p className="font-medium">Auto-Refresh Data</p>
+                    <p className="text-sm text-muted-foreground">Automatically sync Instagram data</p>
+                  </div>
+                  <Badge variant="default">Enabled</Badge>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg border">
+                  <div>
+                    <p className="font-medium">Data Retention</p>
+                    <p className="text-sm text-muted-foreground">Keep analytics data for 90 days</p>
+                  </div>
+                  <Badge variant="secondary">90 days</Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-destructive">
+              <CardHeader>
+                <CardTitle className="text-destructive">Danger Zone</CardTitle>
+                <CardDescription>Irreversible actions</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Button variant="outline" className="w-full">
+                  Disconnect Instagram Account
+                </Button>
+                <Button variant="outline" className="w-full text-destructive hover:bg-destructive hover:text-destructive-foreground">
+                  Delete All Data
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
         </div>
-      </main>
+      </div>
+    </div>
   );
 }

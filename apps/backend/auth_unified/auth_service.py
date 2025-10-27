@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException
 from core.config import settings
 from db.models import User
-from .schemas import UserCreate, TokenResponse
+from .schemas import UserCreate, TokenResponse, LoginRequest
 
 class AuthService:
     def __init__(self):
@@ -62,7 +62,7 @@ class AuthService:
             user=user
         )
     
-    def login_user(self, user_in: UserCreate, db: Session) -> TokenResponse:
+    def login_user(self, user_in, db: Session) -> TokenResponse:
         """Connecter un utilisateur"""
         user = db.query(User).filter(User.email == user_in.email).first()
         if not user or not self.verify_password(user_in.password, user.password_hash):

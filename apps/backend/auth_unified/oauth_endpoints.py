@@ -1,5 +1,6 @@
 # oauth/oauth_endpoints.py
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from db.base import get_db
 from .oauth_service import OAuthService
@@ -9,8 +10,9 @@ oauth_service = OAuthService()
 
 @oauth_router.get("/instagram/start")
 def instagram_auth_start():
-    """Démarrer OAuth Instagram"""
-    return oauth_service.start_instagram_auth()
+    """Démarrer OAuth Instagram - Redirection directe"""
+    auth_data = oauth_service.start_instagram_auth()
+    return RedirectResponse(url=auth_data["auth_url"])
 
 @oauth_router.get("/instagram/callback")
 async def instagram_auth_callback(
@@ -20,6 +22,27 @@ async def instagram_auth_callback(
 ):
     """Callback Instagram"""
     return await oauth_service.handle_instagram_callback(code, state, db)
+
+@oauth_router.get("/callback")
+async def auth_callback(
+    code: str = None,
+    state: str = None,
+    error: str = None,
+    db: Session = Depends(get_db)
+):
+    """Callback général pour redirection vers localhost"""
+    if error:
+        # Rediriger vers localhost avec l'erreur
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url=f"http://localhost:8081/auth/callback?error={error}")
+    
+    if code and state:
+        # Appeler le callback Instagram
+        return await oauth_service.handle_instagram_callback(code, state, db)
+    
+    # Rediriger vers localhost par défaut
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="http://localhost:8081/auth/callback")
 
 @oauth_router.get("/facebook/start")
 def facebook_auth_start():
@@ -34,3 +57,18 @@ async def facebook_auth_callback(
 ):
     """Callback Facebook"""
     return await oauth_service.handle_facebook_callback(code, state, db)
+
+@oauth_router.get("/google/start")
+def google_auth_start():
+    """Démarrer OAuth Google - Redirection directe"""
+    auth_data = oauth_service.start_google_auth()
+    return RedirectResponse(url=auth_data["auth_url"])
+
+@oauth_router.get("/google/callback")
+async def google_auth_callback(
+    code: str,
+    state: str,
+    db: Session = Depends(get_db)
+):
+    """Callback Google"""
+    return await oauth_service.handle_google_callback(code, state, db)

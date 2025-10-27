@@ -3,6 +3,10 @@
 
 import os
 from typing import Optional
+from dotenv import load_dotenv
+
+# Charger les variables d'environnement depuis .env
+load_dotenv()
 
 class Settings:
     """Configuration centralisée de l'application - SÉCURISÉE"""
@@ -52,6 +56,16 @@ class Settings:
         self.MEILI_HOST: str = os.getenv("MEILI_HOST", "http://localhost:7700")
         self.MEILI_INDEX: str = os.getenv("MEILI_INDEX", "posts")
         self.MEILI_MASTER_KEY: Optional[str] = os.getenv("MEILI_MASTER_KEY")
+        
+        # Configuration Google OAuth - OBLIGATOIRE
+        self.GOOGLE_CLIENT_ID: Optional[str] = os.getenv("GOOGLE_CLIENT_ID")
+        self.GOOGLE_CLIENT_SECRET: Optional[str] = os.getenv("GOOGLE_CLIENT_SECRET")
+        
+        # Configuration redirect URI selon l'environnement
+        if os.getenv("ENVIRONMENT") == "production":
+            self.GOOGLE_REDIRECT_URI: str = os.getenv("GOOGLE_REDIRECT_URI_PROD", "https://www.insidr.dev/api/v1/auth/google/callback")
+        else:
+            self.GOOGLE_REDIRECT_URI: str = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/v1/auth/google/callback")
         
         # Configuration Redis (optionnel)
         self.REDIS_URL: str = os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")

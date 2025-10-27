@@ -1,5 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { WatchItem } from '@insider/shared/types';
+
+export interface WatchItem {
+  kind: 'hashtag' | 'user' | 'niche';
+  value: string;
+  created_at: string;
+}
 
 interface WatchlistContextType {
   items: WatchItem[];

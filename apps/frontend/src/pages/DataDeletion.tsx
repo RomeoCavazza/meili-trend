@@ -1,60 +1,184 @@
-import { Card } from '@/components/ui/card';
+import { Navbar } from '@/components/Navbar';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Trash2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { AlertCircle, Trash2, Shield } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 export default function DataDeletion() {
   return (
-    <main className="flex-1 container mx-auto px-4 py-8 max-w-4xl">
-      <Card className="p-8">
-        <h1 className="text-3xl font-bold mb-6">Suppression des données</h1>
-        
-        <div className="prose prose-invert max-w-none space-y-6">
-          <section>
-            <h2 className="text-xl font-semibold mb-3">Vos droits</h2>
-            <p className="text-muted-foreground">
-              Conformément au RGPD, vous avez le droit de demander la suppression de toutes
-              vos données personnelles stockées par Insider Trends.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-semibold mb-3">Données concernées</h2>
-            <ul className="list-disc list-inside text-muted-foreground space-y-2">
-              <li>Informations de compte</li>
-              <li>Historique de recherches</li>
-              <li>Listes de veille personnalisées</li>
-              <li>Notes et préférences</li>
-            </ul>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-semibold mb-3">Procédure</h2>
-            <p className="text-muted-foreground mb-4">
-              Pour demander la suppression de vos données, cliquez sur le bouton ci-dessous.
-              La suppression sera effective sous 30 jours maximum.
-            </p>
-            <Button variant="destructive" className="gap-2">
-              <Trash2 className="h-4 w-4" />
-              Demander la suppression de mes données
-            </Button>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-semibold mb-3">Important</h2>
-            <p className="text-muted-foreground">
-              La suppression de vos données est irréversible. Votre compte sera désactivé
-              et vous ne pourrez plus accéder au service avec les mêmes identifiants.
-            </p>
-          </section>
-
-          <section>
-            <h2 className="text-xl font-semibold mb-3">Contact</h2>
-            <p className="text-muted-foreground">
-              Questions ? Contactez-nous : privacy@insider-trends.com
-            </p>
-          </section>
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      
+      <div className="container py-8">
+        <div className="max-w-3xl mx-auto space-y-8">
+        <div>
+          <h1 className="text-4xl font-bold tracking-tight">Data Deletion Request</h1>
+          <p className="text-muted-foreground mt-2">
+            Request deletion of your personal data from Insider Trends
+          </p>
         </div>
-      </Card>
-    </main>
+
+        <Alert>
+          <Shield className="h-4 w-4" />
+          <AlertTitle>Your Data Rights</AlertTitle>
+          <AlertDescription>
+            In compliance with GDPR and privacy regulations, you have the right to request deletion
+            of your personal data. This process typically takes 30 days to complete.
+          </AlertDescription>
+        </Alert>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>What Will Be Deleted</CardTitle>
+            <CardDescription>
+              Submitting this request will permanently delete the following data:
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2 text-sm">
+              <li className="flex items-start gap-2">
+                <Trash2 className="h-4 w-4 text-destructive mt-0.5" />
+                <span>Your account profile and authentication data</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Trash2 className="h-4 w-4 text-destructive mt-0.5" />
+                <span>Connected Instagram Business accounts and Pages</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Trash2 className="h-4 w-4 text-destructive mt-0.5" />
+                <span>Saved searches and watchlist preferences</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Trash2 className="h-4 w-4 text-destructive mt-0.5" />
+                <span>Generated analytics reports and insights</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <Trash2 className="h-4 w-4 text-destructive mt-0.5" />
+                <span>Usage logs and activity history</span>
+              </li>
+            </ul>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Data Deletion Request Form</CardTitle>
+            <CardDescription>
+              Fill out this form to request deletion of your data
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form className="space-y-6">
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-sm font-medium">
+                  Email Address
+                </label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="your.email@example.com"
+                  required
+                />
+                <p className="text-xs text-muted-foreground">
+                  Enter the email associated with your Insider Trends account
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="user-id" className="text-sm font-medium">
+                  User ID (Optional)
+                </label>
+                <Input
+                  id="user-id"
+                  type="text"
+                  placeholder="Found in your profile settings"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="reason" className="text-sm font-medium">
+                  Reason for Deletion (Optional)
+                </label>
+                <Textarea
+                  id="reason"
+                  placeholder="Help us improve by sharing why you're leaving..."
+                  rows={4}
+                />
+              </div>
+
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>Warning: This action is irreversible</AlertTitle>
+                <AlertDescription>
+                  Once your data is deleted, it cannot be recovered. You will need to create
+                  a new account to use Insider Trends again.
+                </AlertDescription>
+              </Alert>
+
+              <div className="flex gap-3">
+                <Button type="submit" variant="destructive" className="flex-1">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Request Data Deletion
+                </Button>
+                <Button type="button" variant="outline">
+                  Cancel
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Alternative Options</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <h4 className="font-medium mb-2">Download Your Data</h4>
+              <p className="text-sm text-muted-foreground mb-3">
+                Before deleting, you can request a copy of your data in JSON format
+              </p>
+              <Button variant="outline" size="sm">
+                Request Data Export
+              </Button>
+            </div>
+
+            <div className="pt-4 border-t">
+              <h4 className="font-medium mb-2">Disconnect Instagram Only</h4>
+              <p className="text-sm text-muted-foreground mb-3">
+                Remove Instagram access without deleting your Insider Trends account
+              </p>
+              <Button variant="outline" size="sm">
+                Go to Profile Settings
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Questions or Issues?</CardTitle>
+          </CardHeader>
+          <CardContent className="prose prose-sm max-w-none">
+            <p>
+              If you need assistance with your data deletion request or have questions about
+              our data practices:
+            </p>
+            <ul>
+              <li>Email: <a href="mailto:privacy@insidertrends.com" className="text-primary">privacy@insidertrends.com</a></li>
+              <li>Support: <a href="mailto:support@insidertrends.com" className="text-primary">support@insidertrends.com</a></li>
+            </ul>
+            <p className="text-xs text-muted-foreground mt-4">
+              Data deletion requests are processed within 30 days in accordance with GDPR and
+              applicable data protection regulations. You will receive a confirmation email
+              once the deletion is complete.
+            </p>
+          </CardContent>
+        </Card>
+        </div>
+      </div>
+    </div>
   );
 }
