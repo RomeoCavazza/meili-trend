@@ -41,8 +41,8 @@ export function Navbar() {
                 to={item.path}
                 className={`text-sm transition-all ${
                   isActive(item.path)
-                    ? 'text-white'
-                    : 'text-gray-400 hover:text-white'
+                    ? 'text-white font-semibold'
+                    : 'text-gray-400 hover:text-white hover:font-semibold'
                 }`}
               >
                 {item.label}
@@ -58,13 +58,13 @@ export function Navbar() {
                    {user ? (
                      <>
                        {/* Profile */}
-                      <Link to="/profile" className={`text-sm transition-all ${
-                        isProfileActive
-                          ? 'text-white'
-                          : 'text-gray-400 hover:text-white'
-                      }`}>
-                        Profile
-                      </Link>
+                       <Link to="/profile" className={`text-sm transition-all ${
+                         isProfileActive
+                           ? 'text-white font-semibold'
+                           : 'text-gray-400 hover:text-white hover:font-semibold'
+                       }`}>
+                         Profile
+                       </Link>
                      </>
                    ) : (
                      <>
