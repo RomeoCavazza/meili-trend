@@ -44,7 +44,7 @@ export function AISearchBar({ onSearch }: AISearchBarProps) {
 
   return (
     <div className="w-full max-w-3xl mx-auto">
-      <div className="relative flex flex-col gap-3 p-4 rounded-2xl bg-card border border-border shadow-elegant hover:shadow-glow transition-all">
+      <div className="relative flex flex-col gap-3 p-4 rounded-2xl bg-card shadow-elegant hover:shadow-glow transition-all">
         {/* Search Input Row */}
         <div className="flex items-center gap-3">
           <Input
