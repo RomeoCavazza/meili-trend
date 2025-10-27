@@ -63,7 +63,7 @@ export function AISearchBar({ onSearch }: AISearchBarProps) {
           </Button>
           <Button 
             size="icon"
-            className="h-10 w-10 rounded-xl"
+            className="h-10 w-10 rounded-xl bg-gradient-to-r from-[#7C6BEF] to-[#FF66C4] hover:opacity-90"
             onClick={handleSearch}
             disabled={!query.trim()}
           >
