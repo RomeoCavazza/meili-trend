@@ -88,7 +88,7 @@ def healthz():
 
 @app.on_event("startup")
 async def startup_event():
-    """Démarrage de l'application"""
+    """Démarrage de l'application - Création des tables"""
     # Vérifier Redis
     try:
         await redis.ping()
@@ -97,9 +97,13 @@ async def startup_event():
         print(f"⚠️ Redis KO: {e} - Rate limiting désactivé")
     
     # Créer les tables si elles n'existent pas
+    print("🔄 Création des tables de base de données...")
     try:
         from db.base import Base, engine
         Base.metadata.create_all(bind=engine)
         print("✅ Tables de base de données créées/vérifiées")
     except Exception as e:
-        print(f"⚠️ Erreur création tables: {e}")
+        print(f"❌ Erreur création tables: {e}")
+        import traceback
+        traceback.print_exc()
+        raise  # Propager l'erreur pour arrêter le démarrage si problème
