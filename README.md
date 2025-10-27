@@ -110,3 +110,41 @@ python -c "from app import app; print('API OK')"
 
 - API Docs: `https://your-api.railway.app/docs`
 - Frontend: `https://www.insidr.dev`
+
+## Déploiement Production
+
+### Variables d'environnement requises
+
+**Backend (.env)**:
+```bash
+DATABASE_URL=postgresql+psycopg2://user:pass@host:port/db
+SECRET_KEY=<générer-une-clé-aléatoire>
+REDIS_URL=redis://localhost:6379/0
+ENVIRONMENT=production
+OAUTH_STATE_SECRET=<clé-oauth>
+WEBHOOK_VERIFY_TOKEN=<webhook-token>
+```
+
+### Migration de la base de données
+
+```bash
+cd apps/backend
+alembic upgrade head
+```
+
+### Tests locaux
+
+```bash
+# Backend
+uvicorn app:app --reload
+
+# Frontend
+npm run dev
+```
+
+## Compte de test
+
+- **Email**: `test@test.com`
+- **Password**: `test123`
+
+Utilisez `create_test_user.py` pour créer un utilisateur de test.
