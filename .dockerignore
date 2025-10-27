@@ -11,9 +11,9 @@ pnpm-lock.yaml
 README.md
 *.md
 
-# Railway
-railway.toml
-
 # Other
 .DS_Store
 *.log
+
+# N'IGNORER PAS start.sh (nécessaire pour Railway)
+!start.sh
