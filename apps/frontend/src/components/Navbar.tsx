@@ -70,7 +70,7 @@ export function Navbar() {
                      <>
                        <Link
                          to="/auth"
-                         className="text-sm text-foreground hover:text-primary hover:font-bold transition-all"
+                         className="text-sm text-gray-400 hover:text-white transition-all"
                        >
                          Log in
                        </Link>
