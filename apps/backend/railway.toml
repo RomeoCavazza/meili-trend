@@ -1,2 +1,0 @@
-# Ce fichier est vide pour forcer Railway à utiliser le railway.toml à la racine
-# Ce fichier ne doit PAS contenir de startCommand car il override le Dockerfile
