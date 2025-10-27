@@ -1,7 +1,5 @@
 import { Navbar } from '@/components/Navbar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
 import { Globe, Github, Twitter, Instagram, Facebook, Mail, Phone, MapPin } from 'lucide-react';
@@ -27,11 +25,7 @@ export default function Profile() {
                   className="rounded-full w-32 h-32 mx-auto mb-4 border-4 border-primary"
                 />
                 <p className="text-muted-foreground mb-1">Full Stack Developer</p>
-                <p className="text-muted-foreground mb-4">Bay Area, San Francisco, CA</p>
-                <div className="flex justify-center gap-2">
-                  <Button size="sm">Follow</Button>
-                  <Button size="sm" variant="outline">Message</Button>
-                </div>
+                <p className="text-muted-foreground">Bay Area, San Francisco, CA</p>
               </CardContent>
             </Card>
 

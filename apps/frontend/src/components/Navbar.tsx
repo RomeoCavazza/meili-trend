@@ -18,8 +18,8 @@ export function Navbar() {
         // Navigation pour utilisateurs connectés
         const authenticatedNavItems = [
           { path: '/search', label: 'Search' },
-          { path: '/analytics', label: 'Analytics' },
           { path: '/watchlist', label: 'Watchlist' },
+          { path: '/analytics', label: 'Analytics' },
         ];
 
   const isActive = (path: string) => location.pathname === path;
@@ -27,14 +27,14 @@ export function Navbar() {
   return (
     <>
       <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
-        <div className="container flex h-16 items-center justify-between">
+        <div className="container flex h-16 items-center gap-8">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
             <TrendingUp className="h-6 w-6 text-primary" />
             <span className="text-xl font-bold">Insider</span>
           </Link>
 
-          {/* Navigation principale */}
+          {/* Navigation principale - déplacée à droite du logo */}
           <nav className="hidden md:flex items-center gap-6">
             {(user ? authenticatedNavItems : publicNavItems).map((item) => (
               <Link
@@ -51,8 +51,11 @@ export function Navbar() {
             ))}
           </nav>
 
-                 {/* Actions utilisateur */}
-                 <div className="flex items-center gap-3">
+          {/* Spacer pour pousser les actions à droite */}
+          <div className="flex-1" />
+
+          {/* Actions utilisateur */}
+          <div className="flex items-center gap-3">
                    {user ? (
                      <>
                        {/* Profile */}
