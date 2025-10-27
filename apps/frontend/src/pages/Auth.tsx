@@ -61,7 +61,7 @@ export default function Auth() {
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/">
-            <img src="/logo-icon.svg" alt="Insider" className="h-16 w-16 mx-auto mb-4" />
+            <img src="/favicon.svg" alt="Insider" className="h-16 w-16 mx-auto mb-4" />
           </Link>
         </div>
 
