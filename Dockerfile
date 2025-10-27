@@ -19,12 +19,13 @@ RUN pip install -r requirements.txt
 # code backend
 COPY apps/backend/ ./
 
+# Copier start.sh depuis apps/backend
+COPY apps/backend/start.sh ./start.sh
+RUN chmod +x ./start.sh
+
 # ----- runtime -----
 # Railway expects port from $PORT environment variable
 EXPOSE $PORT
 
-# Copier et configurer le script de démarrage
-COPY start.sh start.sh
-RUN chmod +x start.sh
 
 CMD ["./start.sh"]
