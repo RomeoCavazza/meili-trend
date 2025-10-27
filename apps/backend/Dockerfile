@@ -23,17 +23,8 @@ COPY . ./
 # Railway expects port from $PORT environment variable
 EXPOSE $PORT
 
-# Script de démarrage avec migrations
-COPY <<EOF /app/start.sh
-#!/bin/bash
-set -e
-
-echo "🔄 Exécution des migrations Alembic..."
-alembic upgrade head
-
-echo "🚀 Démarrage du serveur..."
-exec gunicorn app:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:\$PORT
-EOF
-
+# Copier et configurer le script de démarrage
+COPY start.sh /app/start.sh
 RUN chmod +x /app/start.sh
+
 CMD ["/app/start.sh"]
