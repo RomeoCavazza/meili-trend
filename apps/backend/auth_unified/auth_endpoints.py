@@ -1,5 +1,5 @@
 # auth/auth_endpoints.py
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from db.base import get_db
 from db.models import User
@@ -9,9 +9,8 @@ from .auth_service import AuthService
 auth_router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 auth_service = AuthService()
 
-def get_current_user(request, db: Session = Depends(get_db)) -> User:
+def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     """Obtenir l'utilisateur actuel depuis le token JWT"""
-    from fastapi import Request
     from jose import JWTError, jwt
     from core.config import settings
     
@@ -45,6 +44,6 @@ def login(user_in: LoginRequest, db: Session = Depends(get_db)):
     return auth_service.login_user(user_in, db)
 
 @auth_router.get("/me", response_model=UserResponse)
-def get_me(current_user: User = Depends(get_current_user)):
+def get_me(request: Request, db: Session = Depends(get_db)):
     """Profil utilisateur"""
-    return current_user
+    return get_current_user(request, db)
