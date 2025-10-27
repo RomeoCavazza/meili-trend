@@ -36,8 +36,8 @@ export function Navbar() {
             <img src="/logo.svg" alt="Insider" className="h-8 w-auto" />
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center gap-6 flex-1 justify-center">
+          {/* Desktop Navigation - LEFT ALIGNED */}
+          <nav className="hidden lg:flex items-center gap-6">
             {(user ? authenticatedNavItems : publicNavItems).map((item) => (
               <Link
                 key={item.path}
@@ -52,6 +52,9 @@ export function Navbar() {
               </Link>
             ))}
           </nav>
+
+          {/* Spacer */}
+          <div className="hidden lg:block flex-1" />
 
           {/* Desktop Actions */}
           <div className="hidden lg:flex items-center gap-3">

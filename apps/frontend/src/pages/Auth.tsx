@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Facebook, Twitter, Instagram } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 
 export default function Auth() {
@@ -57,8 +58,10 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex flex-col bg-background">
+      <Navbar />
+      <div className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
           <Link to="/">
@@ -247,6 +250,7 @@ export default function Auth() {
               </Button>
             </form>
           )}
+        </div>
         </div>
       </div>
       <Footer />
