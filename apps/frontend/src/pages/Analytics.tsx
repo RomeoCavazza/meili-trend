@@ -1,4 +1,5 @@
 import { Navbar } from '@/components/Navbar';
+import { Footer } from '@/components/Footer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -375,6 +376,7 @@ export default function Analytics() {
         </Tabs>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

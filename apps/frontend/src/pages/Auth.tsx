@@ -6,6 +6,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Facebook, Twitter, Instagram } from 'lucide-react';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
+import { Footer } from '@/components/Footer';
 
 export default function Auth() {
   const { signIn, signUp } = useAuth();
@@ -248,6 +249,7 @@ export default function Auth() {
           )}
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
