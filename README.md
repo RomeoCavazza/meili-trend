@@ -142,9 +142,22 @@ uvicorn app:app --reload
 npm run dev
 ```
 
-## Compte de test
+## Seed des données
 
-- **Email**: `test@test.com`
-- **Password**: `test123`
+Pour générer des données de test (utilisateurs, posts, hashtags, etc.) :
 
-Utilisez `create_test_user.py` pour créer un utilisateur de test.
+```bash
+cd apps/backend
+python seed_data.py
+```
+
+Ce script génère :
+- 3 plateformes sociales (Instagram, TikTok, X)
+- 15 utilisateurs (dont 3 comptes de test)
+- 24 hashtags populaires
+- 100 posts avec métriques aléatoires
+
+### Comptes de test générés :
+- **admin@insider.dev** / **demo123** (admin)
+- **demo@insider.dev** / **demo123** (user)
+- **analyst@insider.dev** / **demo123** (analyst)
