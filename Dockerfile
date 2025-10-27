@@ -24,7 +24,7 @@ COPY apps/backend/ ./
 EXPOSE $PORT
 
 # Copier et configurer le script de démarrage
-COPY start.sh /app/start.sh
-RUN chmod +x /app/start.sh
+COPY start.sh ./start.sh
+RUN chmod +x ./start.sh
 
 CMD ["/app/start.sh"]
