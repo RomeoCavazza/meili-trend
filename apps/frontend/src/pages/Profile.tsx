@@ -64,19 +64,15 @@ export default function Profile() {
               </CardContent>
             </Card>
 
-            {/* Sign Out Button */}
-            <Card>
-              <CardContent className="p-6">
-                <Button 
-                  variant="outline" 
-                  className="w-full gap-2"
-                  onClick={handleSignOut}
-                >
-                  <LogOut className="h-4 w-4" />
-                  Sign Out
-                </Button>
-              </CardContent>
-            </Card>
+            {/* Sign Out Button - Simplified */}
+            <Button 
+              variant="outline" 
+              className="w-full gap-2"
+              onClick={handleSignOut}
+            >
+              <LogOut className="h-4 w-4" />
+              Sign Out
+            </Button>
           </div>
 
           {/* Right Column - Details & Stats */}
