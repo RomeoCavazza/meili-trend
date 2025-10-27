@@ -2,6 +2,8 @@
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 buildPath = "."
+watchPatterns = ["apps/backend/**"]
 
 [deploy]
-startCommand = "" # Utilise start.sh du Dockerfile
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 10
