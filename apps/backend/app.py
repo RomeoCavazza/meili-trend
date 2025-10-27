@@ -26,24 +26,27 @@ app = FastAPI(
 # Configuration du rate limiting avec Redis
 setup_rate_limit(app)
 
-# CORS - SÉCURISÉ
+# CORS - SÉCURISÉ - CONFIGURÉ POUR PRODUCTION
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "https://www.insidr.dev", 
+        "http://www.insidr.dev",  # Avec et sans HTTPS
         "https://next-insider.vercel.app",
         "http://localhost:3000",  # Dev uniquement
         "http://localhost:5173",  # Dev uniquement
         "http://localhost:8081",  # Dev uniquement - Frontend Insider
     ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allow_headers=[
         "Content-Type", 
         "Authorization", 
         "X-Requested-With",
         "Accept",
-        "Origin"
+        "Origin",
+        "Access-Control-Request-Method",
+        "Access-Control-Request-Headers",
     ],
     expose_headers=["X-Total-Count"],
     max_age=3600,  # Cache preflight requests
