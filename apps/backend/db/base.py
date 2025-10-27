@@ -3,8 +3,10 @@ import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# Utiliser SQLite pour le développement local
-DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./test.db")
+# PRODUCTION: Utiliser DATABASE_URL ou échouer
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise ValueError("DATABASE_URL environment variable must be set!")
 
 engine = create_engine(
     DATABASE_URL,
