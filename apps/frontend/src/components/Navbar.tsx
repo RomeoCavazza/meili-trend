@@ -26,11 +26,11 @@ export function Navbar() {
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b bg-white backdrop-blur-sm">
+      <header className="sticky top-0 z-50 w-full border-b bg-background backdrop-blur-sm">
         <div className="container flex h-16 items-center gap-8">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <img src="/logo.svg" alt="Insider" className="h-12 w-auto" />
+            <img src="/logo.svg" alt="Insider" className="h-8 w-auto" />
           </Link>
 
           {/* Navigation principale - déplacée à droite du logo */}
@@ -39,10 +39,10 @@ export function Navbar() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`text-sm transition-all font-medium ${
+                className={`text-sm transition-all ${
                   isActive(item.path)
-                    ? 'text-white font-bold'
-                    : 'text-muted-foreground hover:text-white hover:font-bold'
+                    ? 'text-white font-semibold'
+                    : 'text-gray-400 hover:text-white hover:font-semibold'
                 }`}
               >
                 {item.label}
@@ -58,10 +58,10 @@ export function Navbar() {
                    {user ? (
                      <>
                        {/* Profile */}
-                       <Link to="/profile" className={`text-sm transition-all font-medium ${
+                       <Link to="/profile" className={`text-sm transition-all ${
                          isProfileActive
-                           ? 'text-white font-bold'
-                           : 'text-muted-foreground hover:text-white hover:font-bold'
+                           ? 'text-white font-semibold'
+                           : 'text-gray-400 hover:text-white hover:font-semibold'
                        }`}>
                          Profile
                        </Link>
