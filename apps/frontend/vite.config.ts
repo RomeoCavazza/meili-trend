@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => ({
         rewrite: (path) => path.replace(/^\/api\/backend/, ''),
       },
       '/api/v1/auth': {
-        target: 'http://localhost:8000',
+        target: 'https://insidr-production.up.railway.app',
         changeOrigin: true,
       },
       '/api/webhook': {
