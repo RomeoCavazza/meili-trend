@@ -28,7 +28,7 @@ class Settings:
         
         # Configuration JWT
         self.ALGORITHM: str = "HS256"
-        self.ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+        self.ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 7  # 7 jours
         
         # Configuration Instagram Business API - OBLIGATOIRE
         self.IG_ACCESS_TOKEN: Optional[str] = os.getenv("IG_ACCESS_TOKEN")
