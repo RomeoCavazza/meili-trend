@@ -2,311 +2,258 @@ import { Navbar } from '@/components/Navbar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { connectedPages, type ConnectedPage } from '@/lib/mockData';
+import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, Settings, CheckCircle2, Facebook, Instagram, Link as LinkIcon, LogOut } from 'lucide-react';
+import { LogOut, Globe, Github, Twitter, Instagram, Facebook, Mail, Phone, MapPin } from 'lucide-react';
 
 export default function Profile() {
   const { user, signOut } = useAuth();
-  
-  // Mock data for instagram_basic permission
-  const accountInfo = {
-    username: '@insidertrends_official',
-    full_name: user?.name || 'Insider Trends',
-    email: user?.email || '',
-    bio: 'Professional Instagram Analytics Platform 📊 | Helping marketers discover trends 🚀 | Trusted by 2,800+ agencies',
-    website: 'https://insidertrends.com',
-    followers: '45.2K',
-    following: '892',
-    posts: '1,247',
-    account_type: 'Business',
-    verified: true,
-    profile_picture: user?.email || 'https://api.dicebear.com/7.x/shapes/svg?seed=insidertrends',
-  };
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       
       <div className="container py-8">
-        <div className="space-y-8">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-4xl font-bold tracking-tight">Profile</h1>
-            <p className="text-muted-foreground mt-2">
-              Manage your connected Instagram Business accounts and Facebook Pages.
-            </p>
+        {/* Breadcrumb */}
+        <nav className="bg-muted rounded-3 p-3 mb-4">
+          <ol className="flex items-center space-x-2 text-sm">
+            <li><a href="#" className="text-muted-foreground hover:text-foreground">Home</a></li>
+            <li className="text-muted-foreground">/</li>
+            <li><a href="#" className="text-muted-foreground hover:text-foreground">User</a></li>
+            <li className="text-muted-foreground">/</li>
+            <li className="text-foreground font-medium">User Profile</li>
+          </ol>
+        </nav>
+
+        <div className="grid lg:grid-cols-12 gap-6">
+          {/* Left Column - Avatar & Social Links */}
+          <div className="lg:col-span-4">
+            {/* Profile Card */}
+            <Card className="mb-4">
+              <CardContent className="pt-6 text-center">
+                <img
+                  src={`https://api.dicebear.com/7.x/shapes/svg?seed=${user?.email || 'user'}`}
+                  alt="avatar"
+                  className="rounded-full w-32 h-32 mx-auto mb-4 border-4 border-primary"
+                />
+                <p className="text-muted-foreground mb-1">Full Stack Developer</p>
+                <p className="text-muted-foreground mb-4">Bay Area, San Francisco, CA</p>
+                <div className="flex justify-center gap-2">
+                  <Button size="sm">Follow</Button>
+                  <Button size="sm" variant="outline">Message</Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Social Links */}
+            <Card>
+              <CardContent className="p-0">
+                <ul className="divide-y divide-border">
+                  <li className="flex items-center justify-between p-4">
+                    <Globe className="h-5 w-5 text-yellow-500" />
+                    <span className="text-sm text-muted-foreground">https://insidr.dev</span>
+                  </li>
+                  <li className="flex items-center justify-between p-4">
+                    <Github className="h-5 w-5" style={{ color: '#333333' }} />
+                    <span className="text-sm text-muted-foreground">insidr-dev</span>
+                  </li>
+                  <li className="flex items-center justify-between p-4">
+                    <Twitter className="h-5 w-5" style={{ color: '#55acee' }} />
+                    <span className="text-sm text-muted-foreground">@insidr_dev</span>
+                  </li>
+                  <li className="flex items-center justify-between p-4">
+                    <Instagram className="h-5 w-5" style={{ color: '#ac2bac' }} />
+                    <span className="text-sm text-muted-foreground">insidr_trends</span>
+                  </li>
+                  <li className="flex items-center justify-between p-4">
+                    <Facebook className="h-5 w-5" style={{ color: '#3b5998' }} />
+                    <span className="text-sm text-muted-foreground">Insidr Trends</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
           </div>
-          <Button variant="outline" onClick={signOut} className="gap-2">
-            <LogOut className="h-4 w-4" />
-            Sign Out
-          </Button>
-        </div>
 
-        {/* Social Connections */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Connect Social Accounts</CardTitle>
-            <CardDescription>
-              Link your Instagram, TikTok, and X accounts to access all features
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p className="text-muted-foreground">Connectez vos comptes sociaux pour accéder à toutes les fonctionnalités.</p>
-          </CardContent>
-        </Card>
-
-        {/* Tabs */}
-        <Tabs defaultValue="account" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="account">
-              <User className="h-4 w-4 mr-2" />
-              Account Info
-            </TabsTrigger>
-            <TabsTrigger value="pages">
-              <Facebook className="h-4 w-4 mr-2" />
-              Connected Pages
-            </TabsTrigger>
-            <TabsTrigger value="settings">
-              <Settings className="h-4 w-4 mr-2" />
-              Settings
-            </TabsTrigger>
-          </TabsList>
-
-          {/* Account Info Tab - instagram_basic */}
-          <TabsContent value="account" className="space-y-4">
+          {/* Right Column - Details & Stats */}
+          <div className="lg:col-span-8 space-y-4">
+            {/* Personal Information */}
             <Card>
               <CardHeader>
-                <CardTitle>Instagram Business Account</CardTitle>
-                <CardDescription>
-                  Basic metadata from your Instagram Business account (instagram_basic permission)
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex gap-6">
-                  <div className="flex-shrink-0">
-                    <img
-                      src={accountInfo.profile_picture}
-                      alt={accountInfo.username}
-                      className="w-24 h-24 rounded-full border-4 border-primary"
-                    />
-                  </div>
-
-                  <div className="flex-1 space-y-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <h3 className="text-2xl font-bold">{accountInfo.full_name}</h3>
-                        {accountInfo.verified && (
-                          <CheckCircle2 className="h-6 w-6 text-primary" />
-                        )}
-                      </div>
-                      <p className="text-muted-foreground">{accountInfo.username}</p>
-                      <Badge variant="secondary" className="mt-2">
-                        {accountInfo.account_type} Account
-                      </Badge>
-                    </div>
-
-                    <p className="text-sm">{accountInfo.bio}</p>
-
-                    <div className="flex items-center gap-2 text-sm text-primary">
-                      <LinkIcon className="h-4 w-4" />
-                      <a href={accountInfo.website} target="_blank" rel="noopener noreferrer" className="hover:underline">
-                        {accountInfo.website}
-                      </a>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4 pt-4 border-t">
-                      <div className="text-center">
-                        <p className="text-2xl font-bold">{accountInfo.posts}</p>
-                        <p className="text-sm text-muted-foreground">Posts</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold">{accountInfo.followers}</p>
-                        <p className="text-sm text-muted-foreground">Followers</p>
-                      </div>
-                      <div className="text-center">
-                        <p className="text-2xl font-bold">{accountInfo.following}</p>
-                        <p className="text-sm text-muted-foreground">Following</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Account Details */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Account Details</CardTitle>
-                <CardDescription>
-                  Detailed information from Instagram Graph API
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4">
-                  <div className="flex justify-between items-center p-3 rounded-lg border">
-                    <span className="text-sm font-medium">Account ID</span>
-                    <span className="text-sm text-muted-foreground">17841400000000000</span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 rounded-lg border">
-                    <span className="text-sm font-medium">Username</span>
-                    <span className="text-sm text-muted-foreground">{accountInfo.username}</span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 rounded-lg border">
-                    <span className="text-sm font-medium">Account Type</span>
-                    <Badge variant="secondary">{accountInfo.account_type}</Badge>
-                  </div>
-                  <div className="flex justify-between items-center p-3 rounded-lg border">
-                    <span className="text-sm font-medium">Verification Status</span>
-                    {accountInfo.verified ? (
-                      <Badge variant="default" className="bg-success">Verified</Badge>
-                    ) : (
-                      <Badge variant="secondary">Not Verified</Badge>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Connected Pages Tab - pages_show_list */}
-          <TabsContent value="pages" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Connected Facebook Pages</CardTitle>
-                <CardDescription>
-                  List of Pages you manage (pages_show_list permission)
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4">
-                  {connectedPages.map((page) => (
-                    <div
-                      key={page.id}
-                      className="flex items-center justify-between p-4 rounded-lg border hover:border-primary transition-colors"
-                    >
-                      <div className="flex items-center gap-4">
-                        <img
-                          src={page.profile_picture}
-                          alt={page.name}
-                          className="w-16 h-16 rounded-lg"
-                        />
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <p className="font-semibold">{page.name}</p>
-                            {page.verified && (
-                              <CheckCircle2 className="h-4 w-4 text-primary" />
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground">{page.username}</p>
-                          <div className="flex items-center gap-3 mt-1">
-                            <Badge variant="secondary" className="text-xs">
-                              {page.category}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {page.followers} followers
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Badge variant="default" className="bg-success">
-                          <Instagram className="h-3 w-3 mr-1" />
-                          Connected
-                        </Badge>
-                        <Button variant="outline" size="sm">
-                          Manage
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <Button className="w-full mt-4" variant="outline">
-                  <Facebook className="h-4 w-4 mr-2" />
-                  Connect Another Page
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Page Permissions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Page Permissions</CardTitle>
-                <CardDescription>
-                  Current permissions granted to Insider Trends
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-3">
-                  {[
-                    'pages_show_list',
-                    'pages_read_engagement',
-                    'pages_read_user_content',
-                    'instagram_basic',
-                    'instagram_manage_insights',
-                  ].map((permission) => (
-                    <div key={permission} className="flex items-center justify-between p-3 rounded-lg border">
-                      <span className="text-sm font-mono">{permission}</span>
-                      <Badge variant="default" className="bg-success">Granted</Badge>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          {/* Settings Tab */}
-          <TabsContent value="settings" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Account Settings</CardTitle>
-                <CardDescription>Manage your account preferences</CardDescription>
+                <CardTitle>Personal Information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-3 rounded-lg border">
-                  <div>
-                    <p className="font-medium">Email Notifications</p>
-                    <p className="text-sm text-muted-foreground">Receive updates about your analytics</p>
+                <div className="flex items-start">
+                  <div className="w-1/4">
+                    <p className="text-sm font-medium">Full Name</p>
                   </div>
-                  <Badge variant="default">Enabled</Badge>
+                  <div className="flex-1">
+                    <p className="text-sm text-muted-foreground">{user?.name || 'John Doe'}</p>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-lg border">
-                  <div>
-                    <p className="font-medium">Auto-Refresh Data</p>
-                    <p className="text-sm text-muted-foreground">Automatically sync Instagram data</p>
+                <hr className="border-border" />
+                
+                <div className="flex items-start">
+                  <div className="w-1/4">
+                    <p className="text-sm font-medium flex items-center gap-2">
+                      <Mail className="h-4 w-4" />
+                      Email
+                    </p>
                   </div>
-                  <Badge variant="default">Enabled</Badge>
+                  <div className="flex-1">
+                    <p className="text-sm text-muted-foreground">{user?.email || 'user@example.com'}</p>
+                  </div>
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-lg border">
-                  <div>
-                    <p className="font-medium">Data Retention</p>
-                    <p className="text-sm text-muted-foreground">Keep analytics data for 90 days</p>
+                <hr className="border-border" />
+                
+                <div className="flex items-start">
+                  <div className="w-1/4">
+                    <p className="text-sm font-medium flex items-center gap-2">
+                      <Phone className="h-4 w-4" />
+                      Phone
+                    </p>
                   </div>
-                  <Badge variant="secondary">90 days</Badge>
+                  <div className="flex-1">
+                    <p className="text-sm text-muted-foreground">(097) 234-5678</p>
+                  </div>
+                </div>
+                <hr className="border-border" />
+                
+                <div className="flex items-start">
+                  <div className="w-1/4">
+                    <p className="text-sm font-medium flex items-center gap-2">
+                      <Phone className="h-4 w-4" />
+                      Mobile
+                    </p>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-muted-foreground">(098) 765-4321</p>
+                  </div>
+                </div>
+                <hr className="border-border" />
+                
+                <div className="flex items-start">
+                  <div className="w-1/4">
+                    <p className="text-sm font-medium flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      Address
+                    </p>
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm text-muted-foreground">Bay Area, San Francisco, CA</p>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-destructive">
-              <CardHeader>
-                <CardTitle className="text-destructive">Danger Zone</CardTitle>
-                <CardDescription>Irreversible actions</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <Button variant="outline" className="w-full">
-                  Disconnect Instagram Account
-                </Button>
-                <Button variant="outline" className="w-full text-destructive hover:bg-destructive hover:text-destructive-foreground">
-                  Delete All Data
-                </Button>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+            {/* Project Stats */}
+            <div className="grid md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">
+                    <span className="text-primary italic">assignment</span> Project Status
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span>Web Design</span>
+                      <span>80%</span>
+                    </div>
+                    <Progress value={80} />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span>Website Markup</span>
+                      <span>72%</span>
+                    </div>
+                    <Progress value={72} />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span>One Page</span>
+                      <span>89%</span>
+                    </div>
+                    <Progress value={89} />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span>Mobile Template</span>
+                      <span>55%</span>
+                    </div>
+                    <Progress value={55} />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span>Backend API</span>
+                      <span>66%</span>
+                    </div>
+                    <Progress value={66} />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-sm">
+                    <span className="text-primary italic">assignment</span> Skills Progress
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span>JavaScript</span>
+                      <span>90%</span>
+                    </div>
+                    <Progress value={90} />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span>React</span>
+                      <span>85%</span>
+                    </div>
+                    <Progress value={85} />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span>TypeScript</span>
+                      <span>78%</span>
+                    </div>
+                    <Progress value={78} />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span>Python</span>
+                      <span>70%</span>
+                    </div>
+                    <Progress value={70} />
+                  </div>
+
+                  <div>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span>Database</span>
+                      <span>65%</span>
+                    </div>
+                    <Progress value={65} />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Sign Out Button */}
+            <div className="flex justify-end">
+              <Button variant="outline" onClick={signOut} className="gap-2">
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
+            </div>
+          </div>
         </div>
       </div>
     </div>
