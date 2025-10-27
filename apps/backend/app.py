@@ -77,6 +77,7 @@ def ping():
     return {"pong": True, "timestamp": int(time.time())}
 
 @app.get("/healthz")
+@app.get("/api/healthz")
 def healthz():
     """Health check Kubernetes - pas de rate limit"""
     return {"status": "ok", "message": "API running"}
