@@ -67,17 +67,9 @@ export function Navbar() {
                 Profile
               </Link>
             ) : (
-              <>
-                <Link
-                  to="/auth"
-                  className="text-sm text-gray-400 hover:text-white transition-all"
-                >
-                  Log in
-                </Link>
-                <Button size="sm" asChild>
-                  <Link to="/auth">Get started</Link>
-                </Button>
-              </>
+              <Button size="sm" asChild>
+                <Link to="/auth">Get started</Link>
+              </Button>
             )}
           </div>
 
@@ -123,18 +115,9 @@ export function Navbar() {
                 </Link>
               )}
               {!user && (
-                <>
-                  <Link
-                    to="/auth"
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="py-3 px-4 rounded-lg text-sm text-gray-400 hover:text-white hover:bg-accent/50 transition-colors"
-                  >
-                    Log in
-                  </Link>
-                  <Button size="sm" asChild className="mt-2">
-                    <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>Get started</Link>
-                  </Button>
-                </>
+                <Button size="sm" asChild className="mt-2">
+                  <Link to="/auth" onClick={() => setMobileMenuOpen(false)}>Get started</Link>
+                </Button>
               )}
             </nav>
           </div>
