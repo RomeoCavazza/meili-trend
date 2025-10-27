@@ -4,26 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
-import { LogOut, Globe, Github, Twitter, Instagram, Facebook, Mail, Phone, MapPin } from 'lucide-react';
+import { Globe, Github, Twitter, Instagram, Facebook, Mail, Phone, MapPin } from 'lucide-react';
 
 export default function Profile() {
-  const { user, signOut } = useAuth();
+  const { user } = useAuth();
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       
       <div className="container py-8">
-        {/* Breadcrumb */}
-        <nav className="bg-muted rounded-3 p-3 mb-4">
-          <ol className="flex items-center space-x-2 text-sm">
-            <li><a href="#" className="text-muted-foreground hover:text-foreground">Home</a></li>
-            <li className="text-muted-foreground">/</li>
-            <li><a href="#" className="text-muted-foreground hover:text-foreground">User</a></li>
-            <li className="text-muted-foreground">/</li>
-            <li className="text-foreground font-medium">User Profile</li>
-          </ol>
-        </nav>
 
         <div className="grid lg:grid-cols-12 gap-6">
           {/* Left Column - Avatar & Social Links */}
@@ -244,15 +234,7 @@ export default function Profile() {
                   </div>
                 </CardContent>
               </Card>
-            </div>
-
-            {/* Sign Out Button */}
-            <div className="flex justify-end">
-              <Button variant="outline" onClick={signOut} className="gap-2">
-                <LogOut className="h-4 w-4" />
-                Sign Out
-              </Button>
-            </div>
+                         </div>
           </div>
         </div>
       </div>
