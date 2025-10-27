@@ -13,10 +13,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 # dépendances Python
-COPY requirements.txt ./requirements.txt
+COPY apps/backend/requirements.txt ./requirements.txt
 RUN pip install -r requirements.txt
 
-# code backend (depuis apps/backend)
+# code backend
 COPY apps/backend/ ./
 
 # ----- runtime -----
