@@ -62,17 +62,6 @@ export function Navbar() {
                        <Link to="/profile" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
                          Profile
                        </Link>
-                       {/* Sign Out */}
-                       <Button 
-                         size="sm" 
-                         variant="outline"
-                         onClick={() => {
-                           localStorage.removeItem('token');
-                           window.location.href = '/';
-                         }}
-                       >
-                         Sign Out
-                       </Button>
                      </>
                    ) : (
                      <>

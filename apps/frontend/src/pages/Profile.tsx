@@ -1,11 +1,17 @@
 import { Navbar } from '@/components/Navbar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
-import { Globe, Github, Twitter, Instagram, Facebook, Mail, Phone, MapPin } from 'lucide-react';
+import { Globe, Github, Twitter, Instagram, Facebook, Mail, Phone, MapPin, LogOut } from 'lucide-react';
 
 export default function Profile() {
   const { user } = useAuth();
+
+  const handleSignOut = () => {
+    localStorage.removeItem('token');
+    window.location.href = '/';
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -54,6 +60,20 @@ export default function Profile() {
                     <span className="text-sm text-muted-foreground">Insidr Trends</span>
                   </li>
                 </ul>
+              </CardContent>
+            </Card>
+
+            {/* Sign Out Button */}
+            <Card>
+              <CardContent className="p-6">
+                <Button 
+                  variant="outline" 
+                  className="w-full gap-2"
+                  onClick={handleSignOut}
+                >
+                  <LogOut className="h-4 w-4" />
+                  Sign Out
+                </Button>
               </CardContent>
             </Card>
           </div>
