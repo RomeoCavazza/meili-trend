@@ -52,7 +52,7 @@ export function AISearchBar({ onSearch }: AISearchBarProps) {
             onChange={(e) => setQuery(e.target.value)}
             onKeyPress={handleKeyPress}
             placeholder="Search trends, hashtags, creators..."
-            className="flex-1 border-0 bg-transparent focus-visible:ring-0 text-base h-12"
+            className="flex-1 !border-0 border-none bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0 text-base h-12 outline-none"
           />
           <Button 
             variant="ghost" 
