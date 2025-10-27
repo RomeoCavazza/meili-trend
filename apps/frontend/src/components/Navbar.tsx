@@ -36,8 +36,8 @@ export function Navbar() {
             <img src="/logo.svg" alt="Insider" className="h-8 w-auto" />
           </Link>
 
-          {/* Desktop Navigation - LEFT ALIGNED */}
-          <nav className="hidden lg:flex items-center gap-6">
+          {/* Desktop Navigation - LEFT ALIGNED with spacing */}
+          <nav className="hidden lg:flex items-center gap-6 ml-8">
             {(user ? authenticatedNavItems : publicNavItems).map((item) => (
               <Link
                 key={item.path}
