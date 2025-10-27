@@ -35,32 +35,47 @@ class AuthService:
     
     def register_user(self, user_in: UserCreate, db: Session) -> TokenResponse:
         """Inscrire un nouvel utilisateur"""
-        # Vérifier si l'email existe déjà
-        existing_user = db.query(User).filter(User.email == user_in.email).first()
-        if existing_user:
-            raise HTTPException(status_code=400, detail="Email déjà utilisé")
-        
-        # Créer l'utilisateur
-        hashed_password = self.get_password_hash(user_in.password)
-        user = User(
-            email=user_in.email,
-            password_hash=hashed_password,
-            name=user_in.name,
-            role='user'
-        )
-        
-        db.add(user)
-        db.commit()
-        db.refresh(user)
-        
-        # Créer le token
-        access_token = self.create_access_token(data={"sub": str(user.id)})
-        
-        return TokenResponse(
-            access_token=access_token,
-            token_type="bearer",
-            user=user
-        )
+        try:
+            print(f"🔍 Register attempt: {user_in.email}")
+            
+            # Vérifier si l'email existe déjà
+            existing_user = db.query(User).filter(User.email == user_in.email).first()
+            if existing_user:
+                print(f"❌ Email already exists: {user_in.email}")
+                raise HTTPException(status_code=400, detail="Email déjà utilisé")
+            
+            # Créer l'utilisateur
+            hashed_password = self.get_password_hash(user_in.password)
+            print(f"✅ Password hashed")
+            
+            user = User(
+                email=user_in.email,
+                password_hash=hashed_password,
+                name=user_in.name,
+                role='user'
+            )
+            
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+            print(f"✅ User created: {user.id}")
+            
+            # Créer le token
+            access_token = self.create_access_token(data={"sub": str(user.id)})
+            print(f"✅ Token created")
+            
+            return TokenResponse(
+                access_token=access_token,
+                token_type="bearer",
+                user=user
+            )
+        except HTTPException:
+            raise
+        except Exception as e:
+            print(f"❌ ERROR in register_user: {type(e).__name__}: {str(e)}")
+            import traceback
+            traceback.print_exc()
+            raise HTTPException(status_code=500, detail=f"Erreur création utilisateur: {str(e)}")
     
     def login_user(self, user_in, db: Session) -> TokenResponse:
         """Connecter un utilisateur"""
