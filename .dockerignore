@@ -17,3 +17,4 @@ README.md
 
 # N'IGNORER PAS start.sh (nécessaire pour Railway)
 !start.sh
+!apps/backend/start.sh
