@@ -22,10 +22,11 @@ export function Navbar() {
         ];
 
   const isActive = (path: string) => location.pathname === path;
+  const isProfileActive = location.pathname === '/profile';
 
   return (
     <>
-      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
+      <header className="sticky top-0 z-50 w-full border-b bg-white backdrop-blur-sm">
         <div className="container flex h-16 items-center gap-8">
           {/* Logo */}
           <Link to="/" className="flex items-center">
@@ -57,7 +58,11 @@ export function Navbar() {
                    {user ? (
                      <>
                        {/* Profile */}
-                       <Link to="/profile" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+                       <Link to="/profile" className={`text-sm transition-all font-medium ${
+                         isProfileActive
+                           ? 'text-white font-bold'
+                           : 'text-muted-foreground hover:text-white hover:font-bold'
+                       }`}>
                          Profile
                        </Link>
                      </>
