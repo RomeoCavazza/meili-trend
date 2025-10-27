@@ -28,9 +28,9 @@ export function Navbar() {
     <>
       <header className="sticky top-0 z-50 w-full border-b bg-background backdrop-blur-sm">
         <div className="container flex h-16 items-center gap-8">
-          {/* Logo */}
+          {/* Logo - Icône circulaire uniquement */}
           <Link to="/" className="flex items-center">
-            <img src="/logo.svg" alt="Insider" className="h-8 w-auto" />
+            <img src="/logo-icon.svg" alt="Insider" className="h-10 w-10" />
           </Link>
 
           {/* Navigation principale - déplacée à droite du logo */}

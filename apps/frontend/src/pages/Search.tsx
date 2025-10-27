@@ -344,7 +344,7 @@ export default function Search() {
         <div className="container py-8">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="flex items-center space-x-2">
-              <img src="/logo.svg" alt="Insider" className="h-6 w-auto" />
+              <img src="/logo-icon.svg" alt="Insider" className="h-8 w-8" />
             </div>
             <div className="flex gap-6 text-sm text-muted-foreground">
               <Link to="/privacy" className="hover:text-foreground transition-colors">
