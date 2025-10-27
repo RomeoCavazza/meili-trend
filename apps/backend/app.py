@@ -86,10 +86,19 @@ def healthz():
 # =====================================================
 
 @app.on_event("startup")
-async def check_redis():
-    """Vérifie la connexion Redis au démarrage"""
+async def startup_event():
+    """Démarrage de l'application"""
+    # Vérifier Redis
     try:
         await redis.ping()
         print("✅ Redis OK - Rate limiting activé")
     except Exception as e:
         print(f"⚠️ Redis KO: {e} - Rate limiting désactivé")
+    
+    # Créer les tables si elles n'existent pas
+    try:
+        from db.base import Base, engine
+        Base.metadata.create_all(bind=engine)
+        print("✅ Tables de base de données créées/vérifiées")
+    except Exception as e:
+        print(f"⚠️ Erreur création tables: {e}")
