@@ -20,19 +20,16 @@ RUN pip install -r requirements.txt
 COPY apps/backend/ ./
 
 # Créer start.sh directement dans le conteneur
-RUN cat > start.sh << 'EOF'
-#!/bin/bash
-set -e
-
-echo "🔄 Exécution des migrations Alembic..."
-cd /app
-alembic upgrade head
-
-echo "🚀 Démarrage du serveur..."
-exec gunicorn app:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000}
-EOF
-
-RUN chmod +x start.sh
+RUN echo '#!/bin/bash' > start.sh && \
+    echo 'set -e' >> start.sh && \
+    echo '' >> start.sh && \
+    echo 'echo "🔄 Exécution des migrations Alembic..."' >> start.sh && \
+    echo 'cd /app' >> start.sh && \
+    echo 'alembic upgrade head' >> start.sh && \
+    echo '' >> start.sh && \
+    echo 'echo "🚀 Démarrage du serveur..."' >> start.sh && \
+    echo 'exec gunicorn app:app -k uvicorn.workers.UvicornWorker --bind 0.0.0.0:${PORT:-8000}' >> start.sh && \
+    chmod +x start.sh
 
 # ----- runtime -----
 # Railway expects port from $PORT environment variable
