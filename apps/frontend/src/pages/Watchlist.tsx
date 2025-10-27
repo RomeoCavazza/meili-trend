@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Hash, User, Grid3x3, Table, Heart, MessageCircle, Eye, TrendingUp, Plus, X } from 'lucide-react';
 
 export default function Watchlist() {
-  const [selectedUser, setSelectedUser] = useState<string | null>(null);
+  const [selectedUser, setSelectedUser] = useState<number | null>(null);
 
   // Mock data: Niches suivies
   const niches = [
