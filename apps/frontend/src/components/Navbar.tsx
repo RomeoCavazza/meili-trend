@@ -1,5 +1,4 @@
 import { Link, useLocation } from 'react-router-dom';
-import { TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -29,9 +28,8 @@ export function Navbar() {
       <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-sm">
         <div className="container flex h-16 items-center gap-8">
           {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <TrendingUp className="h-6 w-6 text-primary" />
-            <span className="text-xl font-bold">Insider</span>
+          <Link to="/" className="flex items-center">
+            <img src="/logo.svg" alt="Insider" className="h-12 w-auto" />
           </Link>
 
           {/* Navigation principale - déplacée à droite du logo */}
