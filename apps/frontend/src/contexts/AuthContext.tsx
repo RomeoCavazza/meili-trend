@@ -36,12 +36,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const storedToken = localStorage.getItem('token');
     if (storedToken) {
       setToken(storedToken);
+      setLoading(true);
       // Vérifier si le token est valide
       getMe(storedToken)
         .then((userData) => {
+          console.log('✅ Token valid, user:', userData);
           setUser(userData);
         })
-        .catch(() => {
+        .catch((error) => {
+          console.log('❌ Token invalid:', error);
           // Token invalide, le supprimer
           localStorage.removeItem('token');
           setToken(null);
@@ -50,6 +53,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setLoading(false);
         });
     } else {
+      console.log('⚠️ No token found');
       setLoading(false);
     }
   }, []);

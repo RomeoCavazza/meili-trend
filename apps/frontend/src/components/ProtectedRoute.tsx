@@ -8,8 +8,12 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Ne rediriger que si le loading est terminé ET qu'il n'y a pas de token
     if (!loading && !user) {
-      navigate('/auth');
+      const token = localStorage.getItem('token');
+      if (!token) {
+        navigate('/auth');
+      }
     }
   }, [user, loading, navigate]);
 
