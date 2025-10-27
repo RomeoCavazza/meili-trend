@@ -8,5 +8,4 @@ restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
 healthcheckPath = "/healthz"
 healthcheckTimeout = 100
-
-# Ne PAS définir startCommand ici - laisser le Dockerfile utiliser start.sh
+startCommand = ""
