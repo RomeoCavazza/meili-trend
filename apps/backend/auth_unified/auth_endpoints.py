@@ -1,5 +1,6 @@
 # auth/auth_endpoints.py
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.responses import Response
 from sqlalchemy.orm import Session
 from db.base import get_db
 from db.models import User
@@ -8,6 +9,13 @@ from .auth_service import AuthService
 
 auth_router = APIRouter(prefix="/api/v1/auth", tags=["auth"])
 auth_service = AuthService()
+
+# Gérer les requêtes preflight CORS manuellement
+@auth_router.options("/login")
+@auth_router.options("/register")
+def options_handler():
+    """Gérer les requêtes preflight OPTIONS"""
+    return Response(status_code=200)
 
 def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
     """Obtenir l'utilisateur actuel depuis le token JWT"""
@@ -36,12 +44,26 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
 @auth_router.post("/register", response_model=TokenResponse)
 def register(user_in: UserCreate, db: Session = Depends(get_db)):
     """Inscription simple"""
-    return auth_service.register_user(user_in, db)
+    print(f"📝 Register request received: {user_in.email}")
+    try:
+        result = auth_service.register_user(user_in, db)
+        print(f"✅ Register successful: {user_in.email}")
+        return result
+    except Exception as e:
+        print(f"❌ Register error: {e}")
+        raise
 
 @auth_router.post("/login", response_model=TokenResponse)
 def login(user_in: LoginRequest, db: Session = Depends(get_db)):
     """Connexion simple"""
-    return auth_service.login_user(user_in, db)
+    print(f"🔑 Login request received: {user_in.email}")
+    try:
+        result = auth_service.login_user(user_in, db)
+        print(f"✅ Login successful: {user_in.email}")
+        return result
+    except Exception as e:
+        print(f"❌ Login error: {e}")
+        raise
 
 @auth_router.get("/me", response_model=UserResponse)
 def get_me(request: Request, db: Session = Depends(get_db)):
