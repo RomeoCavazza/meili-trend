@@ -1,7 +1,7 @@
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { PostHit } from '@insider/shared/types';
+import { PostHit } from '@/lib/api';
 import { ExternalLink, Image, Video, Layout, Heart, MessageCircle, Eye, TrendingUp, UserPlus } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { fr } from 'date-fns/locale';
