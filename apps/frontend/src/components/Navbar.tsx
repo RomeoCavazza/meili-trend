@@ -40,10 +40,10 @@ export function Navbar() {
               <Link
                 key={item.path}
                 to={item.path}
-                className={`text-sm font-medium transition-colors ${
+                className={`text-sm transition-all font-medium ${
                   isActive(item.path)
-                    ? 'text-primary'
-                    : 'text-muted-foreground hover:text-foreground'
+                    ? 'text-white font-bold'
+                    : 'text-muted-foreground hover:text-white hover:font-bold'
                 }`}
               >
                 {item.label}

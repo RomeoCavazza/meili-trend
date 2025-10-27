@@ -28,7 +28,7 @@ export default function Profile() {
                 <img
                   src={`https://api.dicebear.com/7.x/shapes/svg?seed=${user?.email || 'user'}`}
                   alt="avatar"
-                  className="rounded-full w-32 h-32 mx-auto mb-4 border-4 border-primary"
+                  className="rounded-full w-32 h-32 mx-auto mb-4"
                 />
                 <p className="text-muted-foreground mb-1">Full Stack Developer</p>
                 <p className="text-muted-foreground">Bay Area, San Francisco, CA</p>
