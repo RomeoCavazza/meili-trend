@@ -1,19 +1,88 @@
-import { useState } from 'react';
-import { Card } from '@/components/ui/card';
+import { useState, useMemo } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useWatchlist, WatchItem } from '@/contexts/WatchlistContext';
-import { Eye, Trash2, FileText, Hash, User, Tag, Search, TrendingUp } from 'lucide-react';
+import { Eye, Trash2, FileText, Hash, User, Tag, Search, TrendingUp, Edit, Instagram, Facebook } from 'lucide-react';
+import { toast } from 'sonner';
 import { EmptyState } from '@/components/EmptyState';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
+import { TikTokIcon } from '@/components/icons/TikTokIcon';
+
+interface ScrapedAccount {
+  id: string;
+  username: string;
+  platform: 'instagram' | 'tiktok' | 'facebook';
+  status: 'active' | 'pending' | 'error';
+  lastScraped: string;
+  postsCount: number;
+  followers?: number;
+}
 
 export default function Watch() {
   const { items, removeItem } = useWatchlist();
   const [activeTab, setActiveTab] = useState('daily');
   const [showDemo, setShowDemo] = useState(false);
+
+  // Données de performance pour les graphiques
+  const generatePerformanceData = (days: number) => {
+    const data = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const date = subDays(new Date(), i);
+      data.push({
+        date: format(date, 'dd MMM', { locale: fr }),
+        comptes: Math.floor(Math.random() * 500 + 200),
+        hashtags: Math.floor(Math.random() * 800 + 400),
+        posts: Math.floor(Math.random() * 1200 + 800),
+      });
+    }
+    return data;
+  };
+
+  const performanceData = useMemo(() => {
+    const daysMap: Record<string, number> = {
+      daily: 7,
+      weekly: 30,
+      monthly: 90,
+      yearly: 365,
+    };
+    return generatePerformanceData(daysMap[activeTab] || 7);
+  }, [activeTab]);
+  
+  // Données de démonstration pour les comptes scrapés
+  const [scrapedAccounts] = useState<ScrapedAccount[]>([
+    {
+      id: '1',
+      username: 'makeupro',
+      platform: 'instagram',
+      status: 'active',
+      lastScraped: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+      postsCount: 1247,
+      followers: 45000
+    },
+    {
+      id: '2',
+      username: 'fashionista',
+      platform: 'tiktok',
+      status: 'active',
+      lastScraped: new Date(Date.now() - 5 * 60 * 60 * 1000).toISOString(),
+      postsCount: 892,
+      followers: 125000
+    },
+    {
+      id: '3',
+      username: 'trendsetter366',
+      platform: 'facebook',
+      status: 'pending',
+      lastScraped: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+      postsCount: 345,
+      followers: 23000
+    },
+  ]);
 
   // Demo items pour montrer le rendu
   const demoItems = [
@@ -31,6 +100,32 @@ export default function Watch() {
         return User;
       default:
         return Tag;
+    }
+  };
+
+  const getPlatformIcon = (platform: string) => {
+    switch (platform) {
+      case 'instagram':
+        return <Instagram className="h-4 w-4" style={{ color: '#ac2bac' }} />;
+      case 'facebook':
+        return <Facebook className="h-4 w-4" style={{ color: '#3b5998' }} />;
+      case 'tiktok':
+        return <TikTokIcon className="h-4 w-4" />;
+      default:
+        return <User className="h-4 w-4" />;
+    }
+  };
+
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'active':
+        return <Badge variant="default" className="bg-green-500">Actif</Badge>;
+      case 'pending':
+        return <Badge variant="secondary">En attente</Badge>;
+      case 'error':
+        return <Badge variant="destructive">Erreur</Badge>;
+      default:
+        return <Badge variant="outline">{status}</Badge>;
     }
   };
 
@@ -78,6 +173,114 @@ export default function Watch() {
                 </Button>
               </div>
             )}
+
+            {/* Comptes scrapés - Table */}
+            <section>
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                    <CardTitle className="text-xl font-semibold flex items-center gap-2">
+                      <User className="h-5 w-5" />
+                      Comptes scrapés
+                    </CardTitle>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      {scrapedAccounts.length} compte{scrapedAccounts.length > 1 ? 's' : ''} surveillé{scrapedAccounts.length > 1 ? 's' : ''}
+                    </p>
+                  </div>
+                  <Button onClick={() => toast.info('Ajout de compte en cours de développement')}>
+                    Ajouter un compte
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-[200px]">Compte</TableHead>
+                          <TableHead>Plateforme</TableHead>
+                          <TableHead>Statut</TableHead>
+                          <TableHead className="hidden md:table-cell">Dernière mise à jour</TableHead>
+                          <TableHead className="text-right">Publications</TableHead>
+                          <TableHead className="text-right">Abonnés</TableHead>
+                          <TableHead className="text-right w-[100px]">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {scrapedAccounts.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
+                              Aucun compte scrapé pour le moment
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          scrapedAccounts.map((account) => (
+                            <TableRow key={account.id}>
+                              <TableCell>
+                                <div className="flex items-center gap-3">
+                                  <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                    {getPlatformIcon(account.platform)}
+                                  </div>
+                                  <div>
+                                    <p className="font-medium">@{account.username}</p>
+                                  </div>
+                                </div>
+                              </TableCell>
+                              <TableCell>
+                                <Badge variant="outline" className="capitalize">
+                                  {account.platform}
+                                </Badge>
+                              </TableCell>
+                              <TableCell>
+                                {getStatusBadge(account.status)}
+                              </TableCell>
+                              <TableCell className="hidden md:table-cell">
+                                <span className="text-sm text-muted-foreground">
+                                  {format(new Date(account.lastScraped), 'dd MMM yyyy à HH:mm', { locale: fr })}
+                                </span>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <span className="font-medium">{account.postsCount.toLocaleString()}</span>
+                              </TableCell>
+                              <TableCell className="text-right">
+                                {account.followers ? (
+                                  <span className="font-medium">{account.followers.toLocaleString()}</span>
+                                ) : (
+                                  <span className="text-muted-foreground">—</span>
+                                )}
+                              </TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8"
+                                    onClick={() => toast.info('Édition en cours de développement')}
+                                  >
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-destructive hover:text-destructive"
+                                    onClick={() => {
+                                      if (confirm(`Voulez-vous supprimer @${account.username} ?`)) {
+                                        toast.success(`@${account.username} supprimé`);
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
 
             {/* Watchlist */}
             <section>
@@ -131,35 +334,161 @@ export default function Watch() {
               </div>
             </section>
 
-            {/* Analytics */}
+            {/* Analytics Performance */}
             <section>
               <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
-                Analyses & Tendances
+                Performance & Tendances
               </h2>
               <Card className="p-6">
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                   <TabsList className="grid w-full grid-cols-4">
-                    <TabsTrigger value="daily">Jour</TabsTrigger>
-                    <TabsTrigger value="weekly">Semaine</TabsTrigger>
-                    <TabsTrigger value="monthly">Mois</TabsTrigger>
-                    <TabsTrigger value="yearly">Année</TabsTrigger>
+                    <TabsTrigger value="daily">7 jours</TabsTrigger>
+                    <TabsTrigger value="weekly">30 jours</TabsTrigger>
+                    <TabsTrigger value="monthly">90 jours</TabsTrigger>
+                    <TabsTrigger value="yearly">1 an</TabsTrigger>
                   </TabsList>
-                  {['daily', 'weekly', 'monthly', 'yearly'].map((period) => (
-                    <TabsContent key={period} value={period} className="mt-6">
-                      <div className="aspect-video rounded-lg border border-dashed border-border bg-muted/20 flex flex-col items-center justify-center gap-3">
-                        <TrendingUp className="h-12 w-12 text-muted-foreground" />
-                        <div className="text-center px-4">
-                          <p className="text-muted-foreground font-medium">
-                            Graphiques {period === 'daily' ? 'quotidiens' : period === 'weekly' ? 'hebdomadaires' : period === 'monthly' ? 'mensuels' : 'annuels'}
-                          </p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Évolution des métriques • Comparaison 7j vs 7j-1 • Détection de pics
-                          </p>
+                  <TabsContent value={activeTab} className="mt-6">
+                    <div className="space-y-6">
+                      {/* Graphique Performance Comptes */}
+                      <div>
+                        <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
+                          <User className="h-4 w-4" />
+                          Performance des comptes
+                        </h3>
+                        <div className="h-64">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={performanceData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                              <defs>
+                                <linearGradient id="colorComptes" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#8884d8" stopOpacity={0.8}/>
+                                  <stop offset="95%" stopColor="#8884d8" stopOpacity={0}/>
+                                </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                              <XAxis 
+                                dataKey="date" 
+                                className="text-xs text-muted-foreground"
+                                tick={{ fill: 'currentColor' }}
+                              />
+                              <YAxis 
+                                className="text-xs text-muted-foreground"
+                                tick={{ fill: 'currentColor' }}
+                              />
+                              <Tooltip 
+                                contentStyle={{ 
+                                  backgroundColor: 'hsl(var(--card))',
+                                  border: '1px solid hsl(var(--border))',
+                                  borderRadius: '6px'
+                                }}
+                              />
+                              <Legend />
+                              <Area 
+                                type="monotone" 
+                                dataKey="comptes" 
+                                name="Comptes actifs"
+                                stroke="#8884d8" 
+                                fillOpacity={1} 
+                                fill="url(#colorComptes)" 
+                              />
+                            </AreaChart>
+                          </ResponsiveContainer>
                         </div>
                       </div>
-                    </TabsContent>
-                  ))}
+
+                      {/* Graphique Performance Hashtags */}
+                      <div>
+                        <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
+                          <Hash className="h-4 w-4" />
+                          Performance des hashtags
+                        </h3>
+                        <div className="h-64">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={performanceData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                              <defs>
+                                <linearGradient id="colorHashtags" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#82ca9d" stopOpacity={0.8}/>
+                                  <stop offset="95%" stopColor="#82ca9d" stopOpacity={0}/>
+                                </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                              <XAxis 
+                                dataKey="date" 
+                                className="text-xs text-muted-foreground"
+                                tick={{ fill: 'currentColor' }}
+                              />
+                              <YAxis 
+                                className="text-xs text-muted-foreground"
+                                tick={{ fill: 'currentColor' }}
+                              />
+                              <Tooltip 
+                                contentStyle={{ 
+                                  backgroundColor: 'hsl(var(--card))',
+                                  border: '1px solid hsl(var(--border))',
+                                  borderRadius: '6px'
+                                }}
+                              />
+                              <Legend />
+                              <Area 
+                                type="monotone" 
+                                dataKey="hashtags" 
+                                name="Hashtags suivis"
+                                stroke="#82ca9d" 
+                                fillOpacity={1} 
+                                fill="url(#colorHashtags)" 
+                              />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+
+                      {/* Graphique Performance Posts */}
+                      <div>
+                        <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
+                          <FileText className="h-4 w-4" />
+                          Performance des posts
+                        </h3>
+                        <div className="h-64">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={performanceData} margin={{ top: 5, right: 10, left: 0, bottom: 0 }}>
+                              <defs>
+                                <linearGradient id="colorPosts" x1="0" y1="0" x2="0" y2="1">
+                                  <stop offset="5%" stopColor="#ffc658" stopOpacity={0.8}/>
+                                  <stop offset="95%" stopColor="#ffc658" stopOpacity={0}/>
+                                </linearGradient>
+                              </defs>
+                              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                              <XAxis 
+                                dataKey="date" 
+                                className="text-xs text-muted-foreground"
+                                tick={{ fill: 'currentColor' }}
+                              />
+                              <YAxis 
+                                className="text-xs text-muted-foreground"
+                                tick={{ fill: 'currentColor' }}
+                              />
+                              <Tooltip 
+                                contentStyle={{ 
+                                  backgroundColor: 'hsl(var(--card))',
+                                  border: '1px solid hsl(var(--border))',
+                                  borderRadius: '6px'
+                                }}
+                              />
+                              <Legend />
+                              <Area 
+                                type="monotone" 
+                                dataKey="posts" 
+                                name="Posts scrapés"
+                                stroke="#ffc658" 
+                                fillOpacity={1} 
+                                fill="url(#colorPosts)" 
+                              />
+                            </AreaChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+                    </div>
+                  </TabsContent>
                 </Tabs>
               </Card>
             </section>
