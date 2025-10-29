@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
-import { Globe, Github, Twitter, Instagram, Facebook, Mail, Phone, MapPin, LogOut, Trash2 } from 'lucide-react';
+import { Globe, Instagram, Facebook, Mail, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { TikTokIcon } from '@/components/icons/TikTokIcon';
 
@@ -80,6 +80,8 @@ export default function Profile() {
     switch (provider) {
       case 'instagram':
         return <Instagram className="h-5 w-5" style={{ color: '#ac2bac' }} />;
+      case 'facebook':
+        return <Facebook className="h-5 w-5" style={{ color: '#3b5998' }} />;
       case 'tiktok':
         return <TikTokIcon className="h-5 w-5" />;
       default:
@@ -90,6 +92,7 @@ export default function Profile() {
   const getProviderName = (provider: string) => {
     const names: Record<string, string> = {
       instagram: 'Instagram',
+      facebook: 'Facebook',
       tiktok: 'TikTok'
     };
     return names[provider] || provider;
@@ -124,29 +127,49 @@ export default function Profile() {
 
             {/* Social Links */}
             <Card>
-              <CardContent className="p-0">
-                <ul className="divide-y divide-border">
-                  <li className="flex items-center justify-between p-4">
-                    <Globe className="h-5 w-5 text-yellow-500" />
-                    <span className="text-sm text-muted-foreground">https://veyl.io</span>
-                  </li>
-                  <li className="flex items-center justify-between p-4">
-                    <Github className="h-5 w-5" style={{ color: '#333333' }} />
-                    <span className="text-sm text-muted-foreground">insidr-dev</span>
-                  </li>
-                  <li className="flex items-center justify-between p-4">
-                    <Twitter className="h-5 w-5" style={{ color: '#55acee' }} />
-                    <span className="text-sm text-muted-foreground">@insidr_dev</span>
-                  </li>
-                  <li className="flex items-center justify-between p-4">
-                    <Instagram className="h-5 w-5" style={{ color: '#ac2bac' }} />
-                    <span className="text-sm text-muted-foreground">insidr_trends</span>
-                  </li>
-                  <li className="flex items-center justify-between p-4">
-                    <Facebook className="h-5 w-5" style={{ color: '#3b5998' }} />
-                    <span className="text-sm text-muted-foreground">Insidr Trends</span>
-                  </li>
-                </ul>
+              <CardHeader>
+                <CardTitle>Réseaux sociaux</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {['instagram', 'facebook', 'tiktok'].map((provider) => {
+                  const account = connectedAccounts.find(acc => acc.provider === provider);
+                  const isConnected = !!account;
+                  
+                  return (
+                    <div
+                      key={provider}
+                      className="flex items-center justify-between p-3 border rounded-lg"
+                    >
+                      <div className="flex items-center gap-3">
+                        {getProviderIcon(provider)}
+                        <div>
+                          <p className="text-sm font-medium">{getProviderName(provider)}</p>
+                          <p className={`text-xs ${isConnected ? 'text-green-500' : 'text-muted-foreground'}`}>
+                            {isConnected ? 'Connecté' : 'Non connecté'}
+                          </p>
+                        </div>
+                      </div>
+                      {isConnected ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDisconnect(account!.id, provider)}
+                          className="text-destructive hover:text-destructive"
+                        >
+                          Déconnecter
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleConnect(provider)}
+                        >
+                          Connecter
+                        </Button>
+                      )}
+                    </div>
+                  );
+                })}
               </CardContent>
             </Card>
 
@@ -190,45 +213,6 @@ export default function Profile() {
                     <p className="text-sm text-muted-foreground">{user?.email || 'user@example.com'}</p>
                   </div>
                 </div>
-                <hr className="border-border" />
-                
-                <div className="flex items-start">
-                  <div className="w-1/4">
-                    <p className="text-sm font-medium flex items-center gap-2">
-                      <Phone className="h-4 w-4" />
-                      Phone
-                    </p>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-muted-foreground">(097) 234-5678</p>
-                  </div>
-                </div>
-                <hr className="border-border" />
-                
-                <div className="flex items-start">
-                  <div className="w-1/4">
-                    <p className="text-sm font-medium flex items-center gap-2">
-                      <Phone className="h-4 w-4" />
-                      Mobile
-                    </p>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-muted-foreground">(098) 765-4321</p>
-                  </div>
-                </div>
-                <hr className="border-border" />
-                
-                <div className="flex items-start">
-                  <div className="w-1/4">
-                    <p className="text-sm font-medium flex items-center gap-2">
-                      <MapPin className="h-4 w-4" />
-                      Address
-                    </p>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-muted-foreground">Bay Area, San Francisco, CA</p>
-                  </div>
-                </div>
               </CardContent>
             </Card>
 
@@ -242,7 +226,7 @@ export default function Profile() {
                   <p className="text-sm text-muted-foreground">Chargement...</p>
                 ) : (
                   <>
-                    {['instagram', 'tiktok'].map((provider) => {
+                    {['instagram', 'facebook', 'tiktok'].map((provider) => {
                       const account = connectedAccounts.find(acc => acc.provider === provider);
                       const isConnected = !!account;
                       
@@ -255,11 +239,9 @@ export default function Profile() {
                             {getProviderIcon(provider)}
                             <div>
                               <p className="text-sm font-medium">{getProviderName(provider)}</p>
-                              {isConnected && account?.connected_at && (
-                                <p className="text-xs text-muted-foreground">
-                                  Connecté le {new Date(account.connected_at).toLocaleDateString('fr-FR')}
-                                </p>
-                              )}
+                              <p className={`text-xs ${isConnected ? 'text-green-500' : 'text-muted-foreground'}`}>
+                                {isConnected ? 'Connecté' : 'Non connecté'}
+                              </p>
                             </div>
                           </div>
                           {isConnected ? (
@@ -269,7 +251,7 @@ export default function Profile() {
                               onClick={() => handleDisconnect(account!.id, provider)}
                               className="text-destructive hover:text-destructive"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              Déconnecter
                             </Button>
                           ) : (
                             <Button
