@@ -67,6 +67,10 @@ class Settings:
         else:
             self.GOOGLE_REDIRECT_URI: str = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/v1/auth/google/callback")
         
+        # Configuration TikTok API - OBLIGATOIRE pour récupérer des données
+        self.TIKTOK_CLIENT_KEY: Optional[str] = os.getenv("TIKTOK_CLIENT_KEY")
+        self.TIKTOK_CLIENT_SECRET: Optional[str] = os.getenv("TIKTOK_CLIENT_SECRET")
+        
         # Configuration Redis (optionnel)
         self.REDIS_URL: str = os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")
 

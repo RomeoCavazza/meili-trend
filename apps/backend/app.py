@@ -12,6 +12,7 @@ from posts.posts_endpoints import posts_router
 from hashtags.hashtags_endpoints import hashtags_router
 from platforms.platforms_endpoints import platforms_router
 from analytics.analytics_endpoints import analytics_router
+from jobs.jobs_endpoints import jobs_router
 
 # Import Redis et rate limiting
 from core.redis_client import redis
@@ -58,6 +59,7 @@ app.include_router(posts_router)
 app.include_router(hashtags_router)
 app.include_router(platforms_router)
 app.include_router(analytics_router)
+app.include_router(jobs_router)
 
 # =====================================================
 # ENDPOINTS DE BASE - SIMPLES ET PROPRES
@@ -83,6 +85,32 @@ def ping():
 def healthz():
     """Health check Kubernetes - pas de rate limit"""
     return {"status": "ok", "message": "API running"}
+
+@app.get("/api/v1/meilisearch/test")
+def test_meilisearch():
+    """Test de connexion Meilisearch"""
+    from services.meilisearch_client import meilisearch_service
+    
+    if not meilisearch_service.client:
+        return {
+            "status": "error",
+            "message": "Meilisearch client non initialisé",
+            "check": "Vérifier MEILI_HOST et MEILI_MASTER_KEY"
+        }
+    
+    try:
+        stats = meilisearch_service.get_stats()
+        return {
+            "status": "ok",
+            "message": "Meilisearch connecté avec succès",
+            "stats": stats,
+            "index_name": meilisearch_service.index_name
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Erreur connexion Meilisearch: {str(e)}"
+        }
 
 # =====================================================
 # LIFECYCLE EVENTS - REDIS STARTUP CHECK
