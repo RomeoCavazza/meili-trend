@@ -8,10 +8,11 @@ import { useWatchlist, WatchItem } from '@/contexts/WatchlistContext';
 import { Eye, Trash2, FileText, Hash, User, Tag, Search, TrendingUp, Edit, Instagram, Facebook } from 'lucide-react';
 import { toast } from 'sonner';
 import { EmptyState } from '@/components/EmptyState';
-import { format } from 'date-fns';
+import { format, subDays } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { Link } from 'react-router-dom';
 import { TikTokIcon } from '@/components/icons/TikTokIcon';
+import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend } from 'recharts';
 
 interface ScrapedAccount {
   id: string;
