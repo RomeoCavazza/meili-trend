@@ -3,9 +3,8 @@ import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
-import { Globe, Instagram, Facebook, Mail, LogOut } from 'lucide-react';
+import { Globe, Instagram, Facebook, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { TikTokIcon } from '@/components/icons/TikTokIcon';
 
@@ -109,9 +108,9 @@ export default function Profile() {
       
       <div className="container py-8">
 
-        <div className="grid lg:grid-cols-12 gap-6">
-          {/* Left Column - Avatar & Social Links */}
-          <div className="lg:col-span-4">
+        <div className="max-w-2xl mx-auto">
+          {/* Profile Section */}
+          <div>
             {/* Profile Card */}
             <Card className="mb-4">
               <CardContent className="pt-6 text-center">
@@ -120,8 +119,8 @@ export default function Profile() {
                   alt="avatar"
                   className="rounded-full w-32 h-32 mx-auto mb-4"
                 />
-                <p className="text-muted-foreground mb-1">Full Stack Developer</p>
-                <p className="text-muted-foreground">Bay Area, San Francisco, CA</p>
+                <p className="text-sm font-medium mb-1">{user?.name || 'Utilisateur'}</p>
+                <p className="text-sm text-muted-foreground">{user?.email || 'user@example.com'}</p>
               </CardContent>
             </Card>
 
@@ -184,192 +183,22 @@ export default function Profile() {
             </Button>
           </div>
 
-          {/* Right Column - Details & Stats */}
-          <div className="lg:col-span-8 space-y-4">
-            {/* Personal Information */}
+          {/* My Projects Section */}
+          <div className="mt-6">
+            {/* My Projects */}
             <Card>
-              <CardHeader>
-                <CardTitle>Personal Information</CardTitle>
+              <CardHeader className="flex flex-row items-center justify-between">
+                <CardTitle>My Projects</CardTitle>
+                <Button onClick={() => toast.info('Feature coming soon!')}>
+                  Create a project
+                </Button>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-start">
-                  <div className="w-1/4">
-                    <p className="text-sm font-medium">Full Name</p>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-muted-foreground">{user?.name || 'John Doe'}</p>
-                  </div>
-                </div>
-                <hr className="border-border" />
-                
-                <div className="flex items-start">
-                  <div className="w-1/4">
-                    <p className="text-sm font-medium flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      Email
-                    </p>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm text-muted-foreground">{user?.email || 'user@example.com'}</p>
-                  </div>
-                </div>
+              <CardContent>
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  No projects yet. Create your first project to get started!
+                </p>
               </CardContent>
             </Card>
-
-            {/* Connected Accounts */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Connected Accounts</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {loading ? (
-                  <p className="text-sm text-muted-foreground">Chargement...</p>
-                ) : (
-                  <>
-                    {['instagram', 'facebook', 'tiktok'].map((provider) => {
-                      const account = connectedAccounts.find(acc => acc.provider === provider);
-                      const isConnected = !!account;
-                      
-                      return (
-                        <div
-                          key={provider}
-                          className="flex items-center justify-between p-3 border rounded-lg"
-                        >
-                          <div className="flex items-center gap-3">
-                            {getProviderIcon(provider)}
-                            <div>
-                              <p className="text-sm font-medium">{getProviderName(provider)}</p>
-                              <p className={`text-xs ${isConnected ? 'text-green-500' : 'text-muted-foreground'}`}>
-                                {isConnected ? 'Connecté' : 'Non connecté'}
-                              </p>
-                            </div>
-                          </div>
-                          {isConnected ? (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDisconnect(account!.id, provider)}
-                              className="text-destructive hover:text-destructive"
-                            >
-                              Déconnecter
-                            </Button>
-                          ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleConnect(provider)}
-                            >
-                              Connecter
-                            </Button>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Project Stats */}
-            <div className="grid md:grid-cols-2 gap-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">
-                    <span className="text-primary italic">assignment</span> Project Status
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span>Web Design</span>
-                      <span>80%</span>
-                    </div>
-                    <Progress value={80} />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span>Website Markup</span>
-                      <span>72%</span>
-                    </div>
-                    <Progress value={72} />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span>One Page</span>
-                      <span>89%</span>
-                    </div>
-                    <Progress value={89} />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span>Mobile Template</span>
-                      <span>55%</span>
-                    </div>
-                    <Progress value={55} />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span>Backend API</span>
-                      <span>66%</span>
-                    </div>
-                    <Progress value={66} />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-sm">
-                    <span className="text-primary italic">assignment</span> Skills Progress
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span>JavaScript</span>
-                      <span>90%</span>
-                    </div>
-                    <Progress value={90} />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span>React</span>
-                      <span>85%</span>
-                    </div>
-                    <Progress value={85} />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span>TypeScript</span>
-                      <span>78%</span>
-                    </div>
-                    <Progress value={78} />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span>Python</span>
-                      <span>70%</span>
-                    </div>
-                    <Progress value={70} />
-                  </div>
-
-                  <div>
-                    <div className="flex justify-between text-xs mb-1">
-                      <span>Database</span>
-                      <span>65%</span>
-                    </div>
-                    <Progress value={65} />
-                  </div>
-                </CardContent>
-              </Card>
-                         </div>
           </div>
         </div>
       </div>
