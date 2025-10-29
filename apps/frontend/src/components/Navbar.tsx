@@ -86,16 +86,16 @@ export function Navbar() {
         {/* Mobile Navigation Menu */}
         {mobileMenuOpen && (
           <div className="lg:hidden border-t border-border bg-background">
-            <nav className="flex flex-col py-4 px-4 gap-2">
+            <nav className="flex flex-col py-4 px-4 gap-1">
               {(user ? authenticatedNavItems : publicNavItems).map((item) => (
                 <Link
                   key={item.path}
                   to={item.path}
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`py-3 px-4 rounded-lg text-sm transition-colors ${
+                  className={`py-2 px-4 text-sm transition-colors ${
                     isActive(item.path)
-                      ? 'bg-accent text-primary font-medium'
-                      : 'text-gray-400 hover:text-white hover:bg-accent/50'
+                      ? 'text-white font-medium'
+                      : 'text-gray-400 hover:text-white'
                   }`}
                 >
                   {item.label}
@@ -105,10 +105,10 @@ export function Navbar() {
                 <Link
                   to="/profile"
                   onClick={() => setMobileMenuOpen(false)}
-                  className={`py-3 px-4 rounded-lg text-sm transition-colors ${
+                  className={`py-2 px-4 text-sm transition-colors ${
                     isProfileActive
-                      ? 'bg-accent text-primary font-medium'
-                      : 'text-gray-400 hover:text-white hover:bg-accent/50'
+                      ? 'text-white font-medium'
+                      : 'text-gray-400 hover:text-white'
                   }`}
                 >
                   Profile
