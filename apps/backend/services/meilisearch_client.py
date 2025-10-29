@@ -3,9 +3,18 @@
 
 from typing import List, Dict, Optional, Any
 from meilisearch import Client
-from meilisearch.errors import MeiliSearchApiError
 from core.config import settings
 import logging
+
+# Gestion des erreurs - version compatible 0.37
+try:
+    from meilisearch.errors import MeiliSearchApiError
+except ImportError:
+    # Fallback si l'exception n'existe pas
+    class MeiliSearchApiError(Exception):
+        def __init__(self, message, error_code=None):
+            super().__init__(message)
+            self.error_code = error_code
 
 logger = logging.getLogger(__name__)
 
@@ -36,11 +45,15 @@ class MeilisearchService:
             # Vérifier si l'index existe
             try:
                 self.client.get_index(self.index_name)
-            except MeiliSearchApiError as e:
-                if e.error_code == "index_not_found":
+            except Exception as e:
+                # Si l'index n'existe pas, le créer
+                error_msg = str(e).lower()
+                if "not_found" in error_msg or "index_not_found" in error_msg or "404" in error_msg:
                     # Créer l'index avec configuration optimale
                     self.client.create_index(self.index_name, {'primaryKey': 'id'})
                     logger.info(f"✅ Index '{self.index_name}' créé")
+                else:
+                    raise
             
             # Configurer les paramètres de recherche
             index = self.client.index(self.index_name)
