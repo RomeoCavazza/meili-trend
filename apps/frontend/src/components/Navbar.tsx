@@ -12,7 +12,6 @@ export function Navbar() {
   // Navigation pour utilisateurs non-connectés
   const publicNavItems = [
     { path: '/', label: 'Product' },
-    { path: '/pricing', label: 'Pricing' },
     { path: '/enterprise', label: 'Enterprise' },
     { path: '/docs', label: 'Docs' },
   ];
