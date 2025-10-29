@@ -48,7 +48,7 @@ export async function searchPosts(params: SearchParams): Promise<SearchResponse>
     }
   });
 
-  const url = `${API_BASE}/v1/search/posts?${searchParams.toString()}`;
+  const url = `${API_BASE}/api/v1/posts/search?${searchParams.toString()}`;
   
   const response = await fetch(url, {
     headers: {

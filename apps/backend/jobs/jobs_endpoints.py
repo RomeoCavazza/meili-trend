@@ -64,3 +64,50 @@ async def sync_tiktok_trending(
         "status": "processing"
     }
 
+@jobs_router.post("/clean/seeded-posts")
+def clean_seeded_posts(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Supprime tous les posts avec IDs commençant par 'post_' (posts seedés)"""
+    if current_user.role != "admin":
+        raise HTTPException(
+            status_code=403,
+            detail="Seul un admin peut nettoyer les posts seedés"
+        )
+    
+    try:
+        from db.models import Post
+        
+        # Trouver tous les posts avec ID commençant par "post_"
+        seeded_posts = db.query(Post).filter(Post.id.like('post_%')).all()
+        count = len(seeded_posts)
+        
+        if count == 0:
+            return {
+                "message": "Aucun post seedé trouvé",
+                "deleted": 0,
+                "remaining": db.query(Post).count()
+            }
+        
+        # Supprimer les posts
+        for post in seeded_posts:
+            db.delete(post)
+        
+        db.commit()
+        
+        remaining = db.query(Post).count()
+        
+        return {
+            "message": f"{count} posts seedés supprimés avec succès",
+            "deleted": count,
+            "remaining": remaining
+        }
+        
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur lors du nettoyage: {str(e)}"
+        )
+
