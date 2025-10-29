@@ -42,7 +42,7 @@ export default function Profile() {
                 <ul className="divide-y divide-border">
                   <li className="flex items-center justify-between p-4">
                     <Globe className="h-5 w-5 text-yellow-500" />
-                    <span className="text-sm text-muted-foreground">https://insidr.dev</span>
+                    <span className="text-sm text-muted-foreground">https://veyl.io</span>
                   </li>
                   <li className="flex items-center justify-between p-4">
                     <Github className="h-5 w-5" style={{ color: '#333333' }} />

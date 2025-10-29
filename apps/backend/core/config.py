@@ -35,12 +35,12 @@ class Settings:
         self.IG_USER_ID: Optional[str] = os.getenv("IG_USER_ID")
         self.IG_APP_ID: Optional[str] = os.getenv("IG_APP_ID")
         self.IG_APP_SECRET: Optional[str] = os.getenv("IG_APP_SECRET")
-        self.IG_REDIRECT_URI: str = os.getenv("IG_REDIRECT_URI", "https://www.insidr.dev/auth/callback")
+        self.IG_REDIRECT_URI: str = os.getenv("IG_REDIRECT_URI", "https://veyl.io/auth/callback")
         
         # Configuration Facebook API - OBLIGATOIRE
         self.FB_APP_ID: Optional[str] = os.getenv("FB_APP_ID")
         self.FB_APP_SECRET: Optional[str] = os.getenv("FB_APP_SECRET")
-        self.FB_REDIRECT_URI: str = os.getenv("FB_REDIRECT_URI", "https://www.insidr.dev/auth/facebook/callback")
+        self.FB_REDIRECT_URI: str = os.getenv("FB_REDIRECT_URI", "https://veyl.io/auth/facebook/callback")
         
         # Configuration OAuth - OBLIGATOIRE
         self.OAUTH_STATE_SECRET: str = os.getenv("OAUTH_STATE_SECRET")
@@ -63,7 +63,7 @@ class Settings:
         
         # Configuration redirect URI selon l'environnement
         if os.getenv("ENVIRONMENT") == "production":
-            self.GOOGLE_REDIRECT_URI: str = os.getenv("GOOGLE_REDIRECT_URI_PROD", "https://www.insidr.dev/api/v1/auth/google/callback")
+            self.GOOGLE_REDIRECT_URI: str = os.getenv("GOOGLE_REDIRECT_URI_PROD", "https://veyl.io/api/v1/auth/google/callback")
         else:
             self.GOOGLE_REDIRECT_URI: str = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/v1/auth/google/callback")
         

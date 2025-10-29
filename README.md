@@ -58,12 +58,12 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 # Instagram OAuth
 IG_APP_ID=your-app-id
 IG_APP_SECRET=your-app-secret
-IG_REDIRECT_URI=https://www.insidr.dev/auth/callback
+IG_REDIRECT_URI=https://veyl.io/auth/callback
 
 # Facebook OAuth
 FB_APP_ID=your-app-id
 FB_APP_SECRET=your-app-secret
-FB_REDIRECT_URI=https://www.insidr.dev/auth/facebook/callback
+FB_REDIRECT_URI=https://veyl.io/auth/facebook/callback
 ```
 
 ## Project Structure
@@ -109,7 +109,7 @@ python -c "from app import app; print('API OK')"
 ## Documentation
 
 - API Docs: `https://your-api.railway.app/docs`
-- Frontend: `https://www.insidr.dev`
+- Frontend: `https://veyl.io`
 
 ## Déploiement Production
 

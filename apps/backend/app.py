@@ -30,7 +30,9 @@ setup_rate_limit(app)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "https://www.insidr.dev", 
+        "https://veyl.io",
+        "https://www.veyl.io",
+        "https://www.insidr.dev",  # Ancien domaine - à supprimer après migration
         "https://next-insider.vercel.app",
         "http://localhost:3000",  # Dev uniquement
         "http://localhost:5173",  # Dev uniquement
