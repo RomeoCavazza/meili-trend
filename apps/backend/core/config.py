@@ -3,7 +3,7 @@
 
 import os
 from typing import Optional
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # type: ignore
 
 # Charger les variables d'environnement depuis .env
 load_dotenv()

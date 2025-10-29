@@ -2,13 +2,13 @@
 # Client Meilisearch pour l'indexation et la recherche de posts
 
 from typing import List, Dict, Optional, Any
-from meilisearch import Client
+from meilisearch import Client  # type: ignore
 from core.config import settings
 import logging
 
 # Gestion des erreurs - version compatible 0.37
 try:
-    from meilisearch.errors import MeiliSearchApiError
+    from meilisearch.errors import MeiliSearchApiError  # type: ignore
 except ImportError:
     # Fallback si l'exception n'existe pas
     class MeiliSearchApiError(Exception):

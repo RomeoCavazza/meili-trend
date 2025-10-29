@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Loader2, Facebook, Twitter, Instagram } from 'lucide-react';
+import { TikTokIcon } from '@/components/icons/TikTokIcon';
 import { toast } from 'sonner';
 import { Link } from 'react-router-dom';
 import { Navbar } from '@/components/Navbar';
@@ -55,6 +56,18 @@ export default function Auth() {
 
   const handleGoogleSignIn = () => {
     window.location.href = `${import.meta.env.VITE_API_URL || 'https://insidr-production.up.railway.app'}/api/v1/auth/google/start`;
+  };
+
+  const handleInstagramSignIn = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL || 'https://insidr-production.up.railway.app'}/api/v1/auth/instagram/start`;
+  };
+
+  const handleFacebookSignIn = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL || 'https://insidr-production.up.railway.app'}/api/v1/auth/facebook/start`;
+  };
+
+  const handleTikTokSignIn = () => {
+    window.location.href = `${import.meta.env.VITE_API_URL || 'https://insidr-production.up.railway.app'}/api/v1/auth/tiktok/start`;
   };
 
   return (
@@ -127,11 +140,29 @@ export default function Auth() {
                       />
                     </svg>
                   </Button>
-                  <Button variant="outline" size="icon" className="rounded-xl border-border hover:bg-accent/50">
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="rounded-xl border-border hover:bg-accent/50"
+                    onClick={handleInstagramSignIn}
+                  >
                     <Instagram className="h-5 w-5 text-muted-foreground hover:text-foreground" />
                   </Button>
-                  <Button variant="outline" size="icon" className="rounded-xl border-border hover:bg-accent/50">
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="rounded-xl border-border hover:bg-accent/50"
+                    onClick={handleFacebookSignIn}
+                  >
                     <Facebook className="h-5 w-5 text-muted-foreground hover:text-foreground" />
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="icon" 
+                    className="rounded-xl border-border hover:bg-accent/50"
+                    onClick={handleTikTokSignIn}
+                  >
+                    <TikTokIcon className="h-5 w-5 text-muted-foreground hover:text-foreground" />
                   </Button>
                 </div>
                 <p className="text-sm text-muted-foreground mt-4">or:</p>

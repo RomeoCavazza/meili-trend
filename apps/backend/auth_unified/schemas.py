@@ -1,7 +1,7 @@
 # auth_unified/schemas.py
 # Schémas Pydantic pour l'authentification - SÉCURISÉS
 
-from pydantic import BaseModel, EmailStr, validator, Field
+from pydantic import BaseModel, EmailStr, validator, Field  # type: ignore
 from datetime import datetime
 from typing import Optional
 import re

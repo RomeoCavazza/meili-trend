@@ -1,6 +1,6 @@
 # app.py - REFACTORISÉ - SABOTAGE ÉLIMINÉ - SÉCURISÉ - REDIS INTÉGRÉ !
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import FastAPI  # type: ignore
+from fastapi.middleware.cors import CORSMiddleware  # type: ignore
 import time
 
 # Import des modules unifiés
@@ -60,6 +60,8 @@ app.include_router(hashtags_router)
 app.include_router(platforms_router)
 app.include_router(analytics_router)
 app.include_router(jobs_router)
+from auth_unified.oauth_accounts_endpoints import oauth_accounts_router
+app.include_router(oauth_accounts_router)
 
 # =====================================================
 # ENDPOINTS DE BASE - SIMPLES ET PROPRES

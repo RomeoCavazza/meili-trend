@@ -5,7 +5,7 @@ import asyncio
 import logging
 from datetime import datetime
 from typing import List
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session  # type: ignore
 
 from db.base import SessionLocal
 from db.models import Post, Platform, Hashtag

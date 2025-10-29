@@ -1,9 +1,10 @@
 # oauth/oauth_service.py
+import os
 import time
-import httpx
+import httpx  # type: ignore
 from typing import Dict, Any
-from sqlalchemy.orm import Session
-from fastapi import HTTPException
+from sqlalchemy.orm import Session  # type: ignore
+from fastapi import HTTPException  # type: ignore
 from core.config import settings
 from db.models import User
 from .schemas import TokenResponse
@@ -111,12 +112,38 @@ class OAuthService:
                 name=f"Instagram User {ig_user_id}"
             )
             
+            # Sauvegarder le token Instagram dans OAuthAccount (pour usage API futur)
+            from db.models import OAuthAccount
+            oauth_account = db.query(OAuthAccount).filter(
+                OAuthAccount.user_id == user.id,
+                OAuthAccount.provider == "instagram"
+            ).first()
+            
+            if oauth_account:
+                oauth_account.access_token = long_token
+                oauth_account.provider_user_id = str(ig_user_id)
+            else:
+                oauth_account = OAuthAccount(
+                    user_id=user.id,
+                    provider="instagram",
+                    provider_user_id=str(ig_user_id),
+                    access_token=long_token
+                )
+                db.add(oauth_account)
+            
+            db.commit()
+            
             # Créer le token JWT
             access_token = self.auth_service.create_access_token(data={"sub": str(user.id)})
             
-            # Rediriger vers le frontend localhost avec le token (comme Google OAuth)
-            from fastapi.responses import RedirectResponse
-            frontend_url = "http://localhost:8081/auth/callback"
+            # Rediriger vers le frontend avec le token
+            from fastapi.responses import RedirectResponse  # type: ignore
+            from core.config import settings
+            # Utiliser l'URL de production ou localhost selon l'environnement
+            if os.getenv("ENVIRONMENT") == "production" or "veyl.io" in settings.IG_REDIRECT_URI:
+                frontend_url = "https://veyl.io/auth/callback"
+            else:
+                frontend_url = "http://localhost:8081/auth/callback"
             redirect_url = f"{frontend_url}?token={access_token}&user_id={user.id}&email={user.email}&name={user.name}"
             return RedirectResponse(url=redirect_url)
         
@@ -183,6 +210,27 @@ class OAuthService:
             if access_token and fb_user_id:
                 # Créer ou récupérer l'utilisateur
                 user = self.create_or_get_user(db, email=email, name=name)
+                
+                # Sauvegarder le token Facebook dans OAuthAccount (pour cohérence)
+                from db.models import OAuthAccount
+                oauth_account = db.query(OAuthAccount).filter(
+                    OAuthAccount.user_id == user.id,
+                    OAuthAccount.provider == "facebook"
+                ).first()
+                
+                if oauth_account:
+                    oauth_account.access_token = access_token
+                    oauth_account.provider_user_id = str(fb_user_id)
+                else:
+                    oauth_account = OAuthAccount(
+                        user_id=user.id,
+                        provider="facebook",
+                        provider_user_id=str(fb_user_id),
+                        access_token=access_token
+                    )
+                    db.add(oauth_account)
+                
+                db.commit()
                 
                 # Créer le token JWT
                 jwt_token = self.auth_service.create_access_token(data={"sub": str(user.id)})
@@ -264,12 +312,38 @@ class OAuthService:
                 # Créer ou récupérer l'utilisateur
                 user = self.create_or_get_user(db, email=email, name=name)
                 
+                # Sauvegarder le token Google dans OAuthAccount (pour cohérence, même si pas utilisé pour API)
+                from db.models import OAuthAccount
+                oauth_account = db.query(OAuthAccount).filter(
+                    OAuthAccount.user_id == user.id,
+                    OAuthAccount.provider == "google"
+                ).first()
+                
+                if oauth_account:
+                    oauth_account.access_token = access_token
+                    oauth_account.provider_user_id = str(google_user_id)
+                else:
+                    oauth_account = OAuthAccount(
+                        user_id=user.id,
+                        provider="google",
+                        provider_user_id=str(google_user_id),
+                        access_token=access_token
+                    )
+                    db.add(oauth_account)
+                
+                db.commit()
+                
                 # Créer le token JWT
                 jwt_token = self.auth_service.create_access_token(data={"sub": str(user.id)})
                 
                 # Rediriger vers le frontend avec le token
-                from fastapi.responses import RedirectResponse
-                frontend_url = "http://localhost:8081/auth/callback"
+                from fastapi.responses import RedirectResponse  # type: ignore
+                from core.config import settings
+                # Utiliser l'URL de production ou localhost selon l'environnement
+                if os.getenv("ENVIRONMENT") == "production" or "veyl.io" in settings.IG_REDIRECT_URI:
+                    frontend_url = "https://veyl.io/auth/callback"
+                else:
+                    frontend_url = "http://localhost:8081/auth/callback"
                 redirect_url = f"{frontend_url}?token={jwt_token}&user_id={user.id}&email={email}&name={name}"
                 return RedirectResponse(url=redirect_url)
         
@@ -399,7 +473,7 @@ class OAuthService:
                 jwt_token = self.auth_service.create_access_token(data={"sub": str(user.id)})
                 
                 # Rediriger vers le frontend avec le token
-                from fastapi.responses import RedirectResponse
+                from fastapi.responses import RedirectResponse  # type: ignore
                 frontend_url = "https://veyl.io/auth/callback"
                 redirect_url = f"{frontend_url}?token={jwt_token}&user_id={user.id}&email={email}&name={name}"
                 return RedirectResponse(url=redirect_url)

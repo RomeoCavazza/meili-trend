@@ -1,13 +1,105 @@
+import { useState, useEffect } from 'react';
 import { Navbar } from '@/components/Navbar';
 import { Footer } from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useAuth } from '@/contexts/AuthContext';
-import { Globe, Github, Twitter, Instagram, Facebook, Mail, Phone, MapPin, LogOut } from 'lucide-react';
+import { Globe, Github, Twitter, Instagram, Facebook, Mail, Phone, MapPin, LogOut, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+import { TikTokIcon } from '@/components/icons/TikTokIcon';
+
+interface ConnectedAccount {
+  id: number;
+  provider: string;
+  provider_user_id: string;
+  connected_at: string;
+  has_token: boolean;
+}
 
 export default function Profile() {
   const { user } = useAuth();
+  const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const API_BASE = import.meta.env.VITE_API_URL || 'https://insidr-production.up.railway.app';
+
+  useEffect(() => {
+    fetchConnectedAccounts();
+  }, []);
+
+  const fetchConnectedAccounts = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/v1/auth/accounts/connected`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setConnectedAccounts(data.accounts || []);
+      }
+    } catch (error) {
+      console.error('Error fetching connected accounts:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDisconnect = async (accountId: number, provider: string) => {
+    if (!confirm(`Voulez-vous déconnecter votre compte ${provider} ?`)) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`${API_BASE}/api/v1/auth/accounts/${accountId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        toast.success(`Compte ${provider} déconnecté`);
+        fetchConnectedAccounts();
+      } else {
+        toast.error('Erreur lors de la déconnexion');
+      }
+    } catch (error) {
+      toast.error('Erreur lors de la déconnexion');
+    }
+  };
+
+  const handleConnect = (provider: string) => {
+    window.location.href = `${API_BASE}/api/v1/auth/${provider}/start`;
+  };
+
+  const getProviderIcon = (provider: string) => {
+    switch (provider) {
+      case 'google':
+        return <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" /><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" /><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" /><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" /></svg>;
+      case 'instagram':
+        return <Instagram className="h-5 w-5" style={{ color: '#ac2bac' }} />;
+      case 'facebook':
+        return <Facebook className="h-5 w-5" style={{ color: '#3b5998' }} />;
+      case 'tiktok':
+        return <TikTokIcon className="h-5 w-5" />;
+      default:
+        return <Globe className="h-5 w-5" />;
+    }
+  };
+
+  const getProviderName = (provider: string) => {
+    const names: Record<string, string> = {
+      google: 'Google',
+      instagram: 'Instagram',
+      facebook: 'Facebook',
+      tiktok: 'TikTok'
+    };
+    return names[provider] || provider;
+  };
 
   const handleSignOut = () => {
     localStorage.removeItem('token');
@@ -143,6 +235,62 @@ export default function Profile() {
                     <p className="text-sm text-muted-foreground">Bay Area, San Francisco, CA</p>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Connected Accounts */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Connected Accounts</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {loading ? (
+                  <p className="text-sm text-muted-foreground">Chargement...</p>
+                ) : (
+                  <>
+                    {['google', 'instagram', 'facebook', 'tiktok'].map((provider) => {
+                      const account = connectedAccounts.find(acc => acc.provider === provider);
+                      const isConnected = !!account;
+                      
+                      return (
+                        <div
+                          key={provider}
+                          className="flex items-center justify-between p-3 border rounded-lg"
+                        >
+                          <div className="flex items-center gap-3">
+                            {getProviderIcon(provider)}
+                            <div>
+                              <p className="text-sm font-medium">{getProviderName(provider)}</p>
+                              {isConnected && account?.connected_at && (
+                                <p className="text-xs text-muted-foreground">
+                                  Connecté le {new Date(account.connected_at).toLocaleDateString('fr-FR')}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          {isConnected ? (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDisconnect(account!.id, provider)}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleConnect(provider)}
+                            >
+                              Connecter
+                            </Button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </>
+                )}
               </CardContent>
             </Card>
 

@@ -1,6 +1,6 @@
 # posts/posts_endpoints.py
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException, Query  # type: ignore
+from sqlalchemy.orm import Session  # type: ignore
 from typing import List, Optional
 from db.base import get_db
 from db.models import Post, Platform, User
