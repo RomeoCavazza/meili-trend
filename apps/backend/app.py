@@ -112,6 +112,39 @@ def test_meilisearch():
             "message": f"Erreur connexion Meilisearch: {str(e)}"
         }
 
+@app.get("/api/v1/tiktok/test")
+async def test_tiktok():
+    """Test de connexion TikTok API"""
+    from services.tiktok_service import tiktok_service
+    
+    if not tiktok_service.client_id or not tiktok_service.client_secret:
+        return {
+            "status": "error",
+            "message": "TikTok credentials manquants",
+            "check": "Vérifier TIKTOK_CLIENT_KEY et TIKTOK_CLIENT_SECRET"
+        }
+    
+    try:
+        token = await tiktok_service.get_access_token()
+        if token:
+            return {
+                "status": "ok",
+                "message": "TikTok API connecté avec succès",
+                "has_token": True,
+                "client_id": tiktok_service.client_id[:8] + "..."  # Masquer partiellement
+            }
+        else:
+            return {
+                "status": "error",
+                "message": "Impossible d'obtenir le token TikTok",
+                "check": "Vérifier les credentials ou statut de l'application TikTok"
+            }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Erreur connexion TikTok: {str(e)}"
+        }
+
 # =====================================================
 # LIFECYCLE EVENTS - REDIS STARTUP CHECK
 # =====================================================
