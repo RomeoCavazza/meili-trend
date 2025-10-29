@@ -70,6 +70,7 @@ class Settings:
         # Configuration TikTok API - OBLIGATOIRE pour récupérer des données
         self.TIKTOK_CLIENT_KEY: Optional[str] = os.getenv("TIKTOK_CLIENT_KEY")
         self.TIKTOK_CLIENT_SECRET: Optional[str] = os.getenv("TIKTOK_CLIENT_SECRET")
+        self.TIKTOK_REDIRECT_URI: str = os.getenv("TIKTOK_REDIRECT_URI", "https://veyl.io/api/v1/auth/tiktok/callback")
         
         # Configuration Redis (optionnel)
         self.REDIS_URL: str = os.getenv("REDIS_URL", "redis://127.0.0.1:6379/0")

@@ -72,3 +72,29 @@ async def google_auth_callback(
 ):
     """Callback Google"""
     return await oauth_service.handle_google_callback(code, state, db)
+
+@oauth_router.get("/tiktok/start")
+def tiktok_auth_start():
+    """Démarrer OAuth TikTok - Redirection directe"""
+    auth_data = oauth_service.start_tiktok_auth()
+    return RedirectResponse(url=auth_data["auth_url"])
+
+@oauth_router.get("/tiktok/callback")
+async def tiktok_auth_callback(
+    code: str = None,
+    state: str = None,
+    error: str = None,
+    error_description: str = None,
+    db: Session = Depends(get_db)
+):
+    """Callback TikTok"""
+    if error:
+        from fastapi.responses import RedirectResponse
+        frontend_url = "https://veyl.io/auth/callback"
+        return RedirectResponse(url=f"{frontend_url}?error={error}&error_description={error_description or ''}")
+    
+    if code and state:
+        return await oauth_service.handle_tiktok_callback(code, state, db)
+    
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="https://veyl.io/auth/callback?error=missing_params")

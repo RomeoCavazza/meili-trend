@@ -275,3 +275,134 @@ class OAuthService:
         
         raise HTTPException(status_code=400, detail="Erreur OAuth Google")
     
+    def start_tiktok_auth(self) -> Dict[str, str]:
+        """Démarrer le processus OAuth TikTok"""
+        if not settings.TIKTOK_CLIENT_KEY:
+            raise HTTPException(status_code=500, detail="TIKTOK_CLIENT_KEY non configuré")
+        
+        client_key = settings.TIKTOK_CLIENT_KEY
+        redirect_uri = settings.TIKTOK_REDIRECT_URI
+        
+        # Générer un state sécurisé
+        import secrets
+        state = secrets.token_urlsafe(32)
+        
+        # Scopes demandés pour notre use case
+        scopes = "user.info.basic,user.info.profile,user.info.stats,video.list"
+        
+        params = {
+            "client_key": client_key,
+            "redirect_uri": redirect_uri,
+            "response_type": "code",
+            "scope": scopes,
+            "state": state
+        }
+        
+        auth_url = "https://www.tiktok.com/v2/auth/authorize/?" + "&".join([f"{k}={v}" for k, v in params.items()])
+        
+        return {
+            "auth_url": auth_url,
+            "state": state
+        }
+    
+    async def handle_tiktok_callback(self, code: str, state: str, db: Session) -> TokenResponse:
+        """Gérer le callback OAuth TikTok"""
+        if not settings.TIKTOK_CLIENT_SECRET:
+            raise HTTPException(status_code=500, detail="TIKTOK_CLIENT_SECRET non configuré")
+        
+        client_key = settings.TIKTOK_CLIENT_KEY
+        client_secret = settings.TIKTOK_CLIENT_SECRET
+        redirect_uri = settings.TIKTOK_REDIRECT_URI
+        
+        async with httpx.AsyncClient(timeout=20) as client:
+            # 1) Échanger le code contre un access token
+            r = await client.post(
+                "https://open.tiktokapis.com/v2/oauth/token/",
+                data={
+                    "client_key": client_key,
+                    "client_secret": client_secret,
+                    "code": code,
+                    "grant_type": "authorization_code",
+                    "redirect_uri": redirect_uri
+                },
+                headers={"Content-Type": "application/x-www-form-urlencoded"}
+            )
+            
+            if r.status_code != 200:
+                raise HTTPException(status_code=r.status_code, detail=f"Erreur TikTok OAuth: {r.text}")
+            
+            token_data = r.json()
+            
+            if token_data.get("error"):
+                raise HTTPException(status_code=400, detail=f"Erreur TikTok: {token_data.get('error_description', 'Unknown error')}")
+            
+            access_token = token_data.get("access_token")
+            refresh_token = token_data.get("refresh_token")
+            
+            if not access_token:
+                raise HTTPException(status_code=400, detail="Access token TikTok non obtenu")
+            
+            # 2) Récupérer les infos utilisateur
+            r2 = await client.get(
+                "https://open.tiktokapis.com/v2/user/info/",
+                params={"fields": "open_id,union_id,avatar_url,display_name"},
+                headers={
+                    "Authorization": f"Bearer {access_token}",
+                    "Content-Type": "application/json"
+                }
+            )
+            
+            if r2.status_code != 200:
+                raise HTTPException(status_code=r2.status_code, detail=f"Erreur récupération info TikTok: {r2.text}")
+            
+            user_info = r2.json()
+            data = user_info.get("data", {}).get("user", {})
+            
+            tiktok_user_id = data.get("open_id") or data.get("union_id")
+            display_name = data.get("display_name", "")
+            avatar_url = data.get("avatar_url")
+            
+            if tiktok_user_id:
+                # Créer un email à partir du TikTok user ID si pas d'email
+                email = f"tiktok_{tiktok_user_id}@veyl.io"
+                name = display_name or f"TikTok User {tiktok_user_id[:8]}"
+                
+                # Créer ou récupérer l'utilisateur
+                user = self.create_or_get_user(db, email=email, name=name)
+                if avatar_url:
+                    user.picture_url = avatar_url
+                    db.commit()
+                
+                # Sauvegarder le token OAuth TikTok
+                from db.models import OAuthAccount
+                oauth_account = db.query(OAuthAccount).filter(
+                    OAuthAccount.user_id == user.id,
+                    OAuthAccount.provider == "tiktok"
+                ).first()
+                
+                if oauth_account:
+                    oauth_account.access_token = access_token
+                    oauth_account.refresh_token = refresh_token
+                else:
+                    oauth_account = OAuthAccount(
+                        user_id=user.id,
+                        provider="tiktok",
+                        provider_user_id=str(tiktok_user_id),
+                        access_token=access_token,
+                        refresh_token=refresh_token
+                    )
+                    db.add(oauth_account)
+                
+                db.commit()
+                
+                # Créer le token JWT
+                jwt_token = self.auth_service.create_access_token(data={"sub": str(user.id)})
+                
+                # Rediriger vers le frontend avec le token
+                from fastapi.responses import RedirectResponse
+                frontend_url = "https://veyl.io/auth/callback"
+                redirect_url = f"{frontend_url}?token={jwt_token}&user_id={user.id}&email={email}&name={name}"
+                return RedirectResponse(url=redirect_url)
+        
+        raise HTTPException(status_code=400, detail="Erreur OAuth TikTok")
+    
