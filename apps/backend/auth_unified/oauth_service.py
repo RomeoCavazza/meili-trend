@@ -235,11 +235,14 @@ class OAuthService:
                 # Créer le token JWT
                 jwt_token = self.auth_service.create_access_token(data={"sub": str(user.id)})
                 
-                return TokenResponse(
-                    access_token=jwt_token,
-                    token_type="bearer",
-                    user=user
-                )
+                # Rediriger vers le frontend avec le token
+                from fastapi.responses import RedirectResponse  # type: ignore
+                if os.getenv("ENVIRONMENT") == "production" or "veyl.io" in settings.FB_REDIRECT_URI:
+                    frontend_url = "https://veyl.io/auth/callback"
+                else:
+                    frontend_url = "http://localhost:8081/auth/callback"
+                redirect_url = f"{frontend_url}?token={jwt_token}&user_id={user.id}&email={email}&name={name}"
+                return RedirectResponse(url=redirect_url)
         
         raise HTTPException(status_code=400, detail="Erreur OAuth Facebook")
     
