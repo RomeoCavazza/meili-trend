@@ -148,6 +148,31 @@ async def test_tiktok():
             "message": f"Erreur connexion TikTok: {str(e)}"
         }
 
+@app.get("/api/v1/oauth/debug/google")
+def debug_google_oauth():
+    """Debug: voir l'URL OAuth Google générée"""
+    from core.config import settings
+    from auth_unified.oauth_service import oauth_service
+    
+    try:
+        auth_data = oauth_service.start_google_auth()
+        return {
+            "status": "ok",
+            "auth_url": auth_data["auth_url"],
+            "redirect_uri_used": settings.GOOGLE_REDIRECT_URI,
+            "client_id_set": bool(settings.GOOGLE_CLIENT_ID),
+            "client_id_preview": settings.GOOGLE_CLIENT_ID[:20] + "..." if settings.GOOGLE_CLIENT_ID else None,
+            "state": auth_data["state"],
+            "instructions": "Vérifier que 'redirect_uri_used' correspond EXACTEMENT à celui dans Google Console"
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": str(e),
+            "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+            "client_id_set": bool(settings.GOOGLE_CLIENT_ID)
+        }
+
 # =====================================================
 # LIFECYCLE EVENTS - REDIS STARTUP CHECK
 # =====================================================
