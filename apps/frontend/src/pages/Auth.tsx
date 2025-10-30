@@ -54,20 +54,22 @@ export default function Auth() {
     setLoading(false);
   };
 
+  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
   const handleGoogleSignIn = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL || 'https://insidr-production.up.railway.app'}/api/v1/auth/google/start`;
+    window.location.href = `${API_BASE}/api/v1/auth/google/start`;
   };
 
   const handleInstagramSignIn = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL || 'https://insidr-production.up.railway.app'}/api/v1/auth/instagram/start`;
+    window.location.href = `${API_BASE}/api/v1/auth/instagram/start`;
   };
 
   const handleFacebookSignIn = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL || 'https://insidr-production.up.railway.app'}/api/v1/auth/facebook/start`;
+    window.location.href = `${API_BASE}/api/v1/auth/facebook/start`;
   };
 
   const handleTikTokSignIn = () => {
-    window.location.href = `${import.meta.env.VITE_API_URL || 'https://insidr-production.up.railway.app'}/api/v1/auth/tiktok/start`;
+    window.location.href = `${API_BASE}/api/v1/auth/tiktok/start`;
   };
 
   return (

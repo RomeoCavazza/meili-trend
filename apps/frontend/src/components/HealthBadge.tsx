@@ -6,9 +6,11 @@ export function HealthBadge() {
   const [status, setStatus] = useState<'checking' | 'healthy' | 'down'>('checking');
 
   useEffect(() => {
+    const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+    
     const checkHealth = async () => {
       try {
-        const response = await fetch('https://insidr-production.up.railway.app/api/healthz');
+        const response = await fetch(`${API_BASE}/api/healthz`);
         setStatus(response.ok ? 'healthy' : 'down');
       } catch {
         setStatus('down');

@@ -33,7 +33,6 @@ app.add_middleware(
     allow_origins=[
         "https://veyl.io",
         "https://www.veyl.io",
-        "https://www.insidr.dev",  # Ancien domaine - à supprimer après migration
         "https://next-insider.vercel.app",
         "http://localhost:3000",  # Dev uniquement
         "http://localhost:5173",  # Dev uniquement
