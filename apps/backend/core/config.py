@@ -61,11 +61,8 @@ class Settings:
         self.GOOGLE_CLIENT_ID: Optional[str] = os.getenv("GOOGLE_CLIENT_ID")
         self.GOOGLE_CLIENT_SECRET: Optional[str] = os.getenv("GOOGLE_CLIENT_SECRET")
         
-        # Configuration redirect URI selon l'environnement
-        if os.getenv("ENVIRONMENT") == "production":
-            self.GOOGLE_REDIRECT_URI: str = os.getenv("GOOGLE_REDIRECT_URI_PROD", "https://veyl.io/api/v1/auth/google/callback")
-        else:
-            self.GOOGLE_REDIRECT_URI: str = os.getenv("GOOGLE_REDIRECT_URI", "http://localhost:8000/api/v1/auth/google/callback")
+        # Configuration redirect URI - priorité à PROD si défini, sinon détection auto
+        self.GOOGLE_REDIRECT_URI: str = os.getenv("GOOGLE_REDIRECT_URI_PROD") or os.getenv("GOOGLE_REDIRECT_URI") or "https://veyl.io/api/v1/auth/google/callback"
         
         # Configuration TikTok API - OBLIGATOIRE pour récupérer des données
         self.TIKTOK_CLIENT_KEY: Optional[str] = os.getenv("TIKTOK_CLIENT_KEY")
