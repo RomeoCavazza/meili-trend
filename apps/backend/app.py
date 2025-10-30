@@ -33,6 +33,8 @@ app.add_middleware(
     allow_origins=[
         "https://veyl.io",
         "https://www.veyl.io",
+        "https://insidr.dev",
+        "https://www.insidr.dev",
         "https://next-insider.vercel.app",
         "http://localhost:3000",  # Dev uniquement
         "http://localhost:5173",  # Dev uniquement
