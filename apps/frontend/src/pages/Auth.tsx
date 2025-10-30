@@ -54,7 +54,7 @@ export default function Auth() {
     setLoading(false);
   };
 
-  const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+  const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'https://insidr-production.up.railway.app');
 
   const handleGoogleSignIn = () => {
     window.location.href = `${API_BASE}/api/v1/auth/google/start`;

@@ -1,5 +1,7 @@
 // src/lib/api.ts - API client pour Lovable
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// En dev : utiliser le proxy Vite (vite.config.ts) qui redirige vers Railway
+// En prod : utiliser VITE_API_URL si défini, sinon Railway
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'https://insidr-production.up.railway.app');
 
 export interface SearchParams {
   q?: string;

@@ -8,23 +8,10 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8081,
     proxy: {
-      '/api/healthz': {
+      '/api': {
         target: 'https://insidr-production.up.railway.app',
         changeOrigin: true,
-      },
-      '/api/backend': {
-        target: 'https://insidr-production.up.railway.app',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/backend/, ''),
-      },
-      '/api/v1/auth': {
-        target: 'https://insidr-production.up.railway.app',
-        changeOrigin: true,
-      },
-      '/api/webhook': {
-        target: 'https://insidr-production.up.railway.app',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api/, ''),
+        secure: true,
       },
     },
   },
