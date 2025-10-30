@@ -66,11 +66,24 @@ def google_auth_start():
 
 @oauth_router.get("/google/callback")
 async def google_auth_callback(
-    code: str,
-    state: str,
+    code: str = None,
+    state: str = None,
+    error: str = None,
+    error_description: str = None,
     db: Session = Depends(get_db)
 ):
     """Callback Google"""
+    from fastapi.responses import RedirectResponse
+    from core.config import settings
+    
+    if error:
+        frontend_url = "https://veyl.io/auth/callback" if "veyl.io" in settings.GOOGLE_REDIRECT_URI else "http://localhost:8081/auth/callback"
+        return RedirectResponse(url=f"{frontend_url}?error={error}&error_description={error_description or ''}")
+    
+    if not code or not state:
+        frontend_url = "https://veyl.io/auth/callback" if "veyl.io" in settings.GOOGLE_REDIRECT_URI else "http://localhost:8081/auth/callback"
+        return RedirectResponse(url=f"{frontend_url}?error=missing_params")
+    
     return await oauth_service.handle_google_callback(code, state, db)
 
 @oauth_router.get("/tiktok/start")

@@ -289,19 +289,29 @@ class OAuthService:
         
         async with httpx.AsyncClient(timeout=20) as client:
             # 1) Access token
-            r = await client.post(
-                "https://oauth2.googleapis.com/token",
-                data={
-                    "client_id": client_id,
-                    "client_secret": client_secret,
-                    "redirect_uri": redirect_uri,
-                    "code": code,
-                    "grant_type": "authorization_code"
-                }
-            )
-            r.raise_for_status()
-            token_data = r.json()
-            access_token = token_data.get("access_token")
+            try:
+                r = await client.post(
+                    "https://oauth2.googleapis.com/token",
+                    data={
+                        "client_id": client_id,
+                        "client_secret": client_secret,
+                        "redirect_uri": redirect_uri,
+                        "code": code,
+                        "grant_type": "authorization_code"
+                    }
+                )
+                if r.status_code != 200:
+                    error_detail = r.text
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Erreur Google token: {r.status_code} - {error_detail}. Redirect URI utilisé: {redirect_uri}"
+                    )
+                token_data = r.json()
+                access_token = token_data.get("access_token")
+            except HTTPException:
+                raise
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Erreur requête Google token: {str(e)}")
             
             # 2) User info
             r2 = await client.get(
