@@ -40,7 +40,8 @@ class OAuthService:
             "state": state,
         }
         
-        auth_url = "https://www.instagram.com/oauth/authorize?" + "&".join([f"{k}={v}" for k, v in params.items()])
+        from urllib.parse import urlencode
+        auth_url = "https://www.instagram.com/oauth/authorize?" + urlencode(params)
         
         return {
             "auth_url": auth_url,
@@ -165,7 +166,8 @@ class OAuthService:
             "state": state,
         }
         
-        auth_url = "https://www.facebook.com/v21.0/dialog/oauth?" + "&".join([f"{k}={v}" for k, v in params.items()])
+        from urllib.parse import urlencode
+        auth_url = "https://www.facebook.com/v21.0/dialog/oauth?" + urlencode(params)
         
         return {
             "auth_url": auth_url,
@@ -251,6 +253,8 @@ class OAuthService:
         if not settings.GOOGLE_CLIENT_ID:
             raise HTTPException(status_code=500, detail="GOOGLE_CLIENT_ID non configuré")
         
+        from urllib.parse import urlencode
+        
         client_id = settings.GOOGLE_CLIENT_ID
         redirect_uri = settings.GOOGLE_REDIRECT_URI
         
@@ -267,7 +271,7 @@ class OAuthService:
             "prompt": "consent"
         }
         
-        auth_url = "https://accounts.google.com/o/oauth2/v2/auth?" + "&".join([f"{k}={v}" for k, v in params.items()])
+        auth_url = "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode(params)
         
         return {
             "auth_url": auth_url,
@@ -375,7 +379,8 @@ class OAuthService:
             "state": state
         }
         
-        auth_url = "https://www.tiktok.com/v2/auth/authorize/?" + "&".join([f"{k}={v}" for k, v in params.items()])
+        from urllib.parse import urlencode
+        auth_url = "https://www.tiktok.com/v2/auth/authorize/?" + urlencode(params)
         
         return {
             "auth_url": auth_url,
