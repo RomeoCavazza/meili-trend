@@ -275,7 +275,13 @@ class OAuthService:
         from urllib.parse import quote
         query_parts = []
         for key, value in params.items():
-            query_parts.append(f"{key}={quote(str(value), safe='')}")
+            # Pour redirect_uri, on encode les caractères spéciaux mais on garde :// et /
+            if key == "redirect_uri":
+                encoded_value = quote(str(value), safe="/:")
+            else:
+                # Pour les autres paramètres, on encode normalement (espaces deviennent %20)
+                encoded_value = quote(str(value), safe="")
+            query_parts.append(f"{key}={encoded_value}")
         auth_url = "https://accounts.google.com/o/oauth2/v2/auth?" + "&".join(query_parts)
         
         return {
