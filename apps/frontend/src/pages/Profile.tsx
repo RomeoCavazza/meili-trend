@@ -39,6 +39,16 @@ export default function Profile() {
 
   useEffect(() => {
     fetchConnectedAccounts();
+    
+    // Recharger les comptes après connexion OAuth (vérifier les paramètres URL)
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('token') || params.get('error')) {
+      // Recharger après un délai pour laisser le temps au backend de sauvegarder
+      const timer = setTimeout(() => {
+        fetchConnectedAccounts();
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
   }, []);
 
   const fetchConnectedAccounts = async () => {
