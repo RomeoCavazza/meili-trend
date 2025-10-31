@@ -63,6 +63,8 @@ app.include_router(analytics_router)
 app.include_router(jobs_router)
 from auth_unified.oauth_accounts_endpoints import oauth_accounts_router
 app.include_router(oauth_accounts_router)
+from webhooks.webhooks_endpoints import webhooks_router
+app.include_router(webhooks_router)
 
 # =====================================================
 # ENDPOINTS DE BASE - SIMPLES ET PROPRES
