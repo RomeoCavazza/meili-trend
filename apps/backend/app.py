@@ -152,25 +152,51 @@ async def test_tiktok():
 def debug_google_oauth():
     """Debug: voir l'URL OAuth Google générée"""
     from core.config import settings
-    from auth_unified.oauth_service import oauth_service
+    from fastapi import HTTPException
     
     try:
+        redirect_uri = settings.GOOGLE_REDIRECT_URI
+        client_id_set = bool(settings.GOOGLE_CLIENT_ID)
+        client_secret_set = bool(settings.GOOGLE_CLIENT_SECRET)
+        
+        if not client_id_set:
+            return {
+                "status": "error",
+                "message": "GOOGLE_CLIENT_ID non configuré dans Railway",
+                "redirect_uri_used": redirect_uri,
+                "client_id_set": False,
+                "client_secret_set": client_secret_set
+            }
+        
+        from auth_unified.oauth_service import oauth_service
         auth_data = oauth_service.start_google_auth()
+        
         return {
             "status": "ok",
             "auth_url": auth_data["auth_url"],
-            "redirect_uri_used": settings.GOOGLE_REDIRECT_URI,
-            "client_id_set": bool(settings.GOOGLE_CLIENT_ID),
+            "redirect_uri_used": redirect_uri,
+            "client_id_set": client_id_set,
+            "client_secret_set": client_secret_set,
             "client_id_preview": settings.GOOGLE_CLIENT_ID[:20] + "..." if settings.GOOGLE_CLIENT_ID else None,
             "state": auth_data["state"],
             "instructions": "Vérifier que 'redirect_uri_used' correspond EXACTEMENT à celui dans Google Console"
         }
+    except HTTPException as e:
+        return {
+            "status": "error",
+            "message": e.detail,
+            "status_code": e.status_code,
+            "redirect_uri": settings.GOOGLE_REDIRECT_URI,
+            "client_id_set": bool(settings.GOOGLE_CLIENT_ID)
+        }
     except Exception as e:
+        import traceback
         return {
             "status": "error",
             "message": str(e),
-            "redirect_uri": settings.GOOGLE_REDIRECT_URI,
-            "client_id_set": bool(settings.GOOGLE_CLIENT_ID)
+            "traceback": traceback.format_exc(),
+            "redirect_uri": settings.GOOGLE_REDIRECT_URI if hasattr(settings, 'GOOGLE_REDIRECT_URI') else "N/A",
+            "client_id_set": bool(settings.GOOGLE_CLIENT_ID) if hasattr(settings, 'GOOGLE_CLIENT_ID') else False
         }
 
 # =====================================================
