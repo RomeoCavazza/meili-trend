@@ -25,23 +25,45 @@ class OAuthService:
         return user
     
     def start_instagram_auth(self) -> Dict[str, str]:
-        """Démarrer le processus OAuth Instagram"""
+        """Démarrer le processus OAuth Instagram (via Facebook OAuth pour Instagram Business)"""
         if not settings.IG_APP_ID:
             raise HTTPException(status_code=500, detail="IG_APP_ID non configuré")
         
-        state = str(int(time.time()))
-        scopes = "instagram_business_basic,instagram_business_manage_messages"
+        # Nettoyer les valeurs pour enlever les espaces et caractères indésirables
+        app_id = settings.IG_APP_ID.strip() if settings.IG_APP_ID else None
+        redirect_uri = settings.IG_REDIRECT_URI.strip() if settings.IG_REDIRECT_URI else None
         
+        if not app_id:
+            raise HTTPException(status_code=500, detail="IG_APP_ID vide ou non configuré dans Railway")
+        if not redirect_uri:
+            raise HTTPException(status_code=500, detail="IG_REDIRECT_URI vide ou non configuré dans Railway")
+        
+        state = str(int(time.time()))
+        # Scopes pour Instagram Business API (via Facebook)
+        scopes = "instagram_basic,instagram_business_basic,pages_show_list,pages_read_engagement"
+        
+        # Construire l'URL manuellement avec quote (comme pour Google) pour éviter les problèmes d'encodage
+        from urllib.parse import quote
+        query_parts = []
         params = {
-            "client_id": settings.IG_APP_ID,
-            "redirect_uri": settings.IG_REDIRECT_URI,
+            "client_id": app_id,
+            "redirect_uri": redirect_uri,
             "response_type": "code",
             "scope": scopes,
             "state": state,
         }
         
-        from urllib.parse import urlencode
-        auth_url = "https://www.instagram.com/oauth/authorize?" + urlencode(params)
+        for key, value in params.items():
+            # Pour redirect_uri, garder : et / non encodés
+            if key == "redirect_uri":
+                encoded_value = quote(str(value), safe="/:")
+            else:
+                # Pour les autres paramètres, encoder normalement avec quote (pas quote_plus)
+                encoded_value = quote(str(value), safe="")
+            query_parts.append(f"{quote(str(key), safe='')}={encoded_value}")
+        
+        # Utiliser Facebook OAuth pour Instagram Business API
+        auth_url = "https://www.facebook.com/v21.0/dialog/oauth?" + "&".join(query_parts)
         
         return {
             "auth_url": auth_url,
@@ -49,32 +71,74 @@ class OAuthService:
         }
     
     async def handle_instagram_callback(self, code: str, state: str, db: Session) -> TokenResponse:
-        """Gérer le callback OAuth Instagram"""
+        """Gérer le callback OAuth Instagram (via Facebook OAuth)"""
         if not settings.IG_APP_SECRET:
             raise HTTPException(status_code=500, detail="IG_APP_SECRET non configuré")
         
+        # Nettoyer les valeurs pour enlever les espaces et caractères indésirables
+        app_id = settings.IG_APP_ID.strip() if settings.IG_APP_ID else None
+        app_secret = settings.IG_APP_SECRET.strip() if settings.IG_APP_SECRET else None
+        redirect_uri = settings.IG_REDIRECT_URI.strip() if settings.IG_REDIRECT_URI else None
+        
+        if not app_id:
+            raise HTTPException(status_code=500, detail="IG_APP_ID vide ou non configuré dans Railway")
+        if not app_secret:
+            raise HTTPException(status_code=500, detail="IG_APP_SECRET vide ou non configuré dans Railway")
+        if not redirect_uri:
+            raise HTTPException(status_code=500, detail="IG_REDIRECT_URI vide ou non configuré dans Railway")
+        
         async with httpx.AsyncClient(timeout=20) as client:
             # 1) Short-lived token
-            r = await client.get(
-                "https://graph.facebook.com/v21.0/oauth/access_token",
-                params={
-                    "client_id": settings.IG_APP_ID,
-                    "client_secret": settings.IG_APP_SECRET,
-                    "redirect_uri": settings.IG_REDIRECT_URI,
-                    "code": code,
-                },
-            )
-            r.raise_for_status()
-            data = r.json()
-            short_token = data.get("access_token")
+            try:
+                r = await client.get(
+                    "https://graph.facebook.com/v21.0/oauth/access_token",
+                    params={
+                        "client_id": app_id,
+                        "client_secret": app_secret,
+                        "redirect_uri": redirect_uri,
+                        "code": code,
+                    },
+                )
+                if r.status_code != 200:
+                    error_detail = r.text
+                    error_json = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
+                    error_msg = error_json.get("error", {}).get("message", "unknown_error") if isinstance(error_json.get("error"), dict) else error_json.get("error", "unknown_error")
+                    error_desc = error_detail
+                    
+                    # Message détaillé pour redirect_uri invalide
+                    if "redirect_uri" in error_desc.lower() or "Invalid redirect" in error_desc:
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Erreur Instagram OAuth: Invalid redirect_uri. "
+                                   f"Vérifiez dans Facebook Developer Console:\n"
+                                   f"1. Le Redirect URI '{redirect_uri}' est configuré EXACTEMENT (même casse, même slash final) dans 'Valid OAuth Redirect URIs'\n"
+                                   f"2. L'App ID '{app_id[:20]}...' correspond EXACTEMENT à celui dans Railway\n"
+                                   f"3. L'App Secret dans Railway correspond à l'App Secret associé à cet App ID"
+                        )
+                    else:
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Erreur Instagram token: {r.status_code} - {error_msg}: {error_desc}. Redirect URI utilisé: {redirect_uri}"
+                        )
+                data = r.json()
+                short_token = data.get("access_token")
+                if not short_token:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Access token manquant dans la réponse Facebook/Instagram. Réponse: {data}"
+                    )
+            except HTTPException:
+                raise
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Erreur requête Instagram token: {str(e)}")
 
             # 2) Long-lived token
             r2 = await client.get(
                 "https://graph.facebook.com/v21.0/oauth/access_token",
                 params={
                     "grant_type": "fb_exchange_token",
-                    "client_id": settings.IG_APP_ID,
-                    "client_secret": settings.IG_APP_SECRET,
+                    "client_id": app_id,
+                    "client_secret": app_secret,
                     "fb_exchange_token": short_token,
                 },
             )
