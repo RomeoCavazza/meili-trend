@@ -236,7 +236,7 @@ class OAuthService:
             
             # Rediriger vers le frontend avec le token
             from fastapi.responses import RedirectResponse  # type: ignore
-            from core.config import settings
+            # settings est déjà importé en haut du fichier
             # Utiliser l'URL de production ou localhost selon l'environnement
             if os.getenv("ENVIRONMENT") == "production" or "veyl.io" in settings.IG_REDIRECT_URI:
                 frontend_url = "https://veyl.io/auth/callback"
