@@ -294,9 +294,17 @@ class OAuthService:
         if not settings.GOOGLE_CLIENT_SECRET:
             raise HTTPException(status_code=500, detail="GOOGLE_CLIENT_SECRET non configuré")
         
-        client_id = settings.GOOGLE_CLIENT_ID
-        client_secret = settings.GOOGLE_CLIENT_SECRET
-        redirect_uri = settings.GOOGLE_REDIRECT_URI
+        # Nettoyer les valeurs pour enlever les espaces et caractères indésirables
+        client_id = settings.GOOGLE_CLIENT_ID.strip() if settings.GOOGLE_CLIENT_ID else None
+        client_secret = settings.GOOGLE_CLIENT_SECRET.strip() if settings.GOOGLE_CLIENT_SECRET else None
+        redirect_uri = settings.GOOGLE_REDIRECT_URI.strip() if settings.GOOGLE_REDIRECT_URI else None
+        
+        if not client_id:
+            raise HTTPException(status_code=500, detail="GOOGLE_CLIENT_ID vide ou non configuré dans Railway")
+        if not client_secret:
+            raise HTTPException(status_code=500, detail="GOOGLE_CLIENT_SECRET vide ou non configuré dans Railway")
+        if not redirect_uri:
+            raise HTTPException(status_code=500, detail="GOOGLE_REDIRECT_URI vide ou non configuré dans Railway")
         
         async with httpx.AsyncClient(timeout=20) as client:
             # 1) Access token
@@ -313,10 +321,26 @@ class OAuthService:
                 )
                 if r.status_code != 200:
                     error_detail = r.text
-                    raise HTTPException(
-                        status_code=400,
-                        detail=f"Erreur Google token: {r.status_code} - {error_detail}. Redirect URI utilisé: {redirect_uri}"
-                    )
+                    error_json = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
+                    error_msg = error_json.get("error", "unknown_error")
+                    error_desc = error_json.get("error_description", error_detail)
+                    
+                    # Message détaillé pour invalid_client
+                    if error_msg == "invalid_client":
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Erreur Google OAuth: invalid_client - {error_desc}. "
+                                   f"Vérifiez dans Google Cloud Console:\n"
+                                   f"1. Le Client ID '{client_id[:30]}...' correspond EXACTEMENT à celui dans Railway\n"
+                                   f"2. Le Client Secret dans Railway correspond au Client Secret associé à ce Client ID\n"
+                                   f"3. Le Redirect URI '{redirect_uri}' est configuré EXACTEMENT (même casse, même slash final) dans 'Authorized redirect URIs'\n"
+                                   f"4. L'OAuth consent screen est configuré et publié (pas seulement en mode test)"
+                        )
+                    else:
+                        raise HTTPException(
+                            status_code=400,
+                            detail=f"Erreur Google token: {r.status_code} - {error_msg}: {error_desc}. Redirect URI utilisé: {redirect_uri}"
+                        )
                 token_data = r.json()
                 access_token = token_data.get("access_token")
                 if not access_token:
