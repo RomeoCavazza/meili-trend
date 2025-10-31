@@ -722,7 +722,8 @@ class OAuthService:
                 encoded_value = quote(str(value), safe="")
             query_parts.append(f"{quote(str(key), safe='')}={encoded_value}")
         
-        auth_url = "https://www.tiktok.com/v2/auth/authorize/?" + "&".join(query_parts)
+        # TikTok OAuth v2 endpoint (sans slash final avant le ?)
+        auth_url = "https://www.tiktok.com/v2/auth/authorize?" + "&".join(query_parts)
         logger.info(f"✅ TikTok OAuth URL générée: {auth_url[:150]}...")
         
         return {
