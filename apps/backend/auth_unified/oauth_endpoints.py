@@ -74,17 +74,37 @@ async def google_auth_callback(
 ):
     """Callback Google"""
     from fastapi.responses import RedirectResponse
+    from fastapi import HTTPException
     from core.config import settings
+    from urllib.parse import quote
     
+    # Déterminer l'URL frontend
+    if "veyl.io" in settings.GOOGLE_REDIRECT_URI:
+        frontend_url = "https://veyl.io/auth/callback"
+    else:
+        frontend_url = "http://localhost:8081/auth/callback"
+    
+    # Gérer les erreurs OAuth de Google
     if error:
-        frontend_url = "https://veyl.io/auth/callback" if "veyl.io" in settings.GOOGLE_REDIRECT_URI else "http://localhost:8081/auth/callback"
-        return RedirectResponse(url=f"{frontend_url}?error={error}&error_description={error_description or ''}")
+        error_desc = quote(error_description or '')
+        return RedirectResponse(url=f"{frontend_url}?error={quote(error)}&error_description={error_desc}")
     
+    # Vérifier les paramètres requis
     if not code or not state:
-        frontend_url = "https://veyl.io/auth/callback" if "veyl.io" in settings.GOOGLE_REDIRECT_URI else "http://localhost:8081/auth/callback"
-        return RedirectResponse(url=f"{frontend_url}?error=missing_params")
+        return RedirectResponse(url=f"{frontend_url}?error=missing_params&error_description={quote('Code ou state manquant dans la réponse Google')}")
     
-    return await oauth_service.handle_google_callback(code, state, db)
+    # Traiter le callback
+    try:
+        return await oauth_service.handle_google_callback(code, state, db)
+    except HTTPException as e:
+        # Rediriger vers le frontend avec l'erreur détaillée
+        error_msg = quote(str(e.detail))
+        return RedirectResponse(url=f"{frontend_url}?error=oauth_error&error_description={error_msg}")
+    except Exception as e:
+        # Capturer toutes les autres exceptions
+        import traceback
+        error_msg = quote(f"Erreur interne: {str(e)}")
+        return RedirectResponse(url=f"{frontend_url}?error=internal_error&error_description={error_msg}")
 
 @oauth_router.get("/tiktok/start")
 def tiktok_auth_start():
