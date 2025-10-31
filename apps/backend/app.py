@@ -162,6 +162,7 @@ async def test_tiktok():
 @app.get("/api/v1/oauth/debug/tiktok")
 def debug_tiktok_oauth():
     """Debug: voir l'URL OAuth TikTok générée et la configuration"""
+    import os
     from auth_unified.oauth_service import OAuthService
     oauth_service = OAuthService()
     
