@@ -319,26 +319,47 @@ class OAuthService:
                     )
                 token_data = r.json()
                 access_token = token_data.get("access_token")
+                if not access_token:
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Access token manquant dans la réponse Google. Réponse: {token_data}"
+                    )
             except HTTPException:
                 raise
             except Exception as e:
                 raise HTTPException(status_code=400, detail=f"Erreur requête Google token: {str(e)}")
             
             # 2) User info
-            r2 = await client.get(
-                "https://www.googleapis.com/oauth2/v2/userinfo",
-                headers={"Authorization": f"Bearer {access_token}"}
-            )
-            r2.raise_for_status()
-            user_info = r2.json()
+            try:
+                r2 = await client.get(
+                    "https://www.googleapis.com/oauth2/v2/userinfo",
+                    headers={"Authorization": f"Bearer {access_token}"}
+                )
+                if r2.status_code != 200:
+                    error_detail = r2.text
+                    raise HTTPException(
+                        status_code=400,
+                        detail=f"Erreur récupération user info Google: {r2.status_code} - {error_detail}"
+                    )
+                user_info = r2.json()
+            except HTTPException:
+                raise
+            except Exception as e:
+                raise HTTPException(status_code=400, detail=f"Erreur requête user info Google: {str(e)}")
             
             google_user_id = user_info.get("id")
             email = user_info.get("email")
             name = user_info.get("name")
             
-            if access_token and google_user_id:
+            if not google_user_id:
+                raise HTTPException(status_code=400, detail="Impossible de récupérer l'ID utilisateur Google")
+            
+            if not email:
+                raise HTTPException(status_code=400, detail="Impossible de récupérer l'email Google")
+            
+            try:
                 # Créer ou récupérer l'utilisateur
-                user = self.create_or_get_user(db, email=email, name=name)
+                user = self.create_or_get_user(db, email=email, name=name or email.split("@")[0])
                 
                 # Sauvegarder le token Google dans OAuthAccount (pour cohérence, même si pas utilisé pour API)
                 from db.models import OAuthAccount
@@ -368,14 +389,21 @@ class OAuthService:
                 from fastapi.responses import RedirectResponse  # type: ignore
                 from core.config import settings
                 # Utiliser l'URL de production ou localhost selon l'environnement
-                if os.getenv("ENVIRONMENT") == "production" or "veyl.io" in settings.IG_REDIRECT_URI:
+                if os.getenv("ENVIRONMENT") == "production" or "veyl.io" in settings.GOOGLE_REDIRECT_URI:
                     frontend_url = "https://veyl.io/auth/callback"
                 else:
                     frontend_url = "http://localhost:8081/auth/callback"
-                redirect_url = f"{frontend_url}?token={jwt_token}&user_id={user.id}&email={email}&name={name}"
+                redirect_url = f"{frontend_url}?token={jwt_token}&user_id={user.id}&email={email or ''}&name={name or ''}"
                 return RedirectResponse(url=redirect_url)
+            except Exception as e:
+                import traceback
+                db.rollback()
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Erreur lors de la création/récupération utilisateur: {str(e)}. Traceback: {traceback.format_exc()}"
+                )
         
-        raise HTTPException(status_code=400, detail="Erreur OAuth Google")
+        raise HTTPException(status_code=400, detail="Erreur OAuth Google: access_token ou google_user_id manquant")
     
     def start_tiktok_auth(self) -> Dict[str, str]:
         """Démarrer le processus OAuth TikTok"""
