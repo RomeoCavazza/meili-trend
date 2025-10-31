@@ -322,20 +322,31 @@ class OAuthService:
                 email = f"facebook_{fb_user_id}@insidr.dev"
             
             if access_token and fb_user_id:
-                # Créer ou récupérer l'utilisateur
-                user = self.create_or_get_user(db, email=email, name=name or f"Facebook User {fb_user_id}")
-                
-                # Sauvegarder le token Facebook dans OAuthAccount (pour cohérence)
+                # Vérifier si un OAuthAccount Facebook existe déjà pour cet utilisateur Facebook
                 from db.models import OAuthAccount
-                oauth_account = db.query(OAuthAccount).filter(
-                    OAuthAccount.user_id == user.id,
-                    OAuthAccount.provider == "facebook"
+                existing_oauth = db.query(OAuthAccount).filter(
+                    OAuthAccount.provider == "facebook",
+                    OAuthAccount.provider_user_id == str(fb_user_id)
                 ).first()
                 
-                if oauth_account:
-                    oauth_account.access_token = access_token
-                    oauth_account.provider_user_id = str(fb_user_id)
+                # Si l'OAuth account existe, récupérer le User associé
+                if existing_oauth:
+                    user = db.query(User).filter(User.id == existing_oauth.user_id).first()
+                    # Mettre à jour le token
+                    existing_oauth.access_token = access_token
                 else:
+                    # Chercher un User existant avec un email réel (pas instagram_xxx ou facebook_xxx)
+                    # pour permettre la liaison de plusieurs OAuth accounts au même User
+                    user = None
+                    if email and not email.startswith(('instagram_', 'facebook_')):
+                        # Si on a un email réel, chercher un User existant avec cet email
+                        user = db.query(User).filter(User.email == email).first()
+                    
+                    # Si pas de User trouvé, créer un nouveau User
+                    if not user:
+                        user = self.create_or_get_user(db, email=email, name=name or f"Facebook User {fb_user_id}")
+                    
+                    # Créer l'OAuthAccount Facebook
                     oauth_account = OAuthAccount(
                         user_id=user.id,
                         provider="facebook",
