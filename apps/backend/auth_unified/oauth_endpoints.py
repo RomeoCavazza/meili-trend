@@ -83,12 +83,40 @@ def facebook_auth_start():
 
 @oauth_router.get("/facebook/callback")
 async def facebook_auth_callback(
-    code: str,
-    state: str,
+    code: str = None,
+    state: str = None,
+    error: str = None,
+    error_description: str = None,
     db: Session = Depends(get_db)
 ):
     """Callback Facebook"""
-    return await oauth_service.handle_facebook_callback(code, state, db)
+    # Déterminer l'URL frontend
+    if "veyl.io" in settings.FB_REDIRECT_URI:
+        frontend_url = "https://veyl.io/auth/callback"
+    else:
+        frontend_url = "http://localhost:8081/auth/callback"
+    
+    # Gérer les erreurs OAuth de Facebook
+    if error:
+        error_desc = quote(error_description or '')
+        return RedirectResponse(url=f"{frontend_url}?error={quote(error)}&error_description={error_desc}")
+    
+    # Vérifier les paramètres requis
+    if not code or not state:
+        return RedirectResponse(url=f"{frontend_url}?error=missing_params&error_description={quote('Code ou state manquant dans la réponse Facebook')}")
+    
+    # Traiter le callback
+    try:
+        return await oauth_service.handle_facebook_callback(code, state, db)
+    except HTTPException as e:
+        # Rediriger vers le frontend avec l'erreur détaillée
+        error_msg = quote(str(e.detail))
+        return RedirectResponse(url=f"{frontend_url}?error=oauth_error&error_description={error_msg}")
+    except Exception as e:
+        # Capturer toutes les autres exceptions
+        import traceback
+        error_msg = quote(f"Erreur interne: {str(e)}")
+        return RedirectResponse(url=f"{frontend_url}?error=internal_error&error_description={error_msg}")
 
 @oauth_router.get("/google/start")
 def google_auth_start():

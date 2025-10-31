@@ -306,9 +306,20 @@ class OAuthService:
             email = user_info.get("email")
             name = user_info.get("name")
             
+            if not fb_user_id:
+                raise HTTPException(status_code=400, detail="Impossible de récupérer l'ID utilisateur Facebook")
+            
+            if not access_token:
+                raise HTTPException(status_code=400, detail="Access token manquant dans la réponse Facebook")
+            
+            # Email peut être None selon les permissions
+            if not email:
+                # Utiliser l'ID Facebook comme email temporaire
+                email = f"facebook_{fb_user_id}@insidr.dev"
+            
             if access_token and fb_user_id:
                 # Créer ou récupérer l'utilisateur
-                user = self.create_or_get_user(db, email=email, name=name)
+                user = self.create_or_get_user(db, email=email, name=name or f"Facebook User {fb_user_id}")
                 
                 # Sauvegarder le token Facebook dans OAuthAccount (pour cohérence)
                 from db.models import OAuthAccount
@@ -336,11 +347,18 @@ class OAuthService:
                 
                 # Rediriger vers le frontend avec le token
                 from fastapi.responses import RedirectResponse  # type: ignore
+                from urllib.parse import quote
+                # settings est déjà importé en haut du fichier
+                # Utiliser l'URL de production ou localhost selon l'environnement
                 if os.getenv("ENVIRONMENT") == "production" or "veyl.io" in settings.FB_REDIRECT_URI:
                     frontend_url = "https://veyl.io/auth/callback"
                 else:
                     frontend_url = "http://localhost:8081/auth/callback"
-                redirect_url = f"{frontend_url}?token={jwt_token}&user_id={user.id}&email={email}&name={name}"
+                # Encoder correctement tous les paramètres pour éviter les problèmes avec les caractères spéciaux
+                encoded_token = quote(jwt_token, safe='')
+                encoded_email = quote(email or '', safe='')
+                encoded_name = quote(name or '', safe='')
+                redirect_url = f"{frontend_url}?token={encoded_token}&user_id={user.id}&email={encoded_email}&name={encoded_name}"
                 return RedirectResponse(url=redirect_url)
         
         raise HTTPException(status_code=400, detail="Erreur OAuth Facebook")
