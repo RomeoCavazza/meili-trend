@@ -387,13 +387,18 @@ class OAuthService:
                 
                 # Rediriger vers le frontend avec le token
                 from fastapi.responses import RedirectResponse  # type: ignore
+                from urllib.parse import quote
                 from core.config import settings
                 # Utiliser l'URL de production ou localhost selon l'environnement
                 if os.getenv("ENVIRONMENT") == "production" or "veyl.io" in settings.GOOGLE_REDIRECT_URI:
                     frontend_url = "https://veyl.io/auth/callback"
                 else:
                     frontend_url = "http://localhost:8081/auth/callback"
-                redirect_url = f"{frontend_url}?token={jwt_token}&user_id={user.id}&email={email or ''}&name={name or ''}"
+                # Encoder correctement tous les paramètres pour éviter les problèmes avec les caractères spéciaux du JWT
+                encoded_token = quote(jwt_token, safe='')
+                encoded_email = quote(email or '', safe='')
+                encoded_name = quote(name or '', safe='')
+                redirect_url = f"{frontend_url}?token={encoded_token}&user_id={user.id}&email={encoded_email}&name={encoded_name}"
                 return RedirectResponse(url=redirect_url)
             except Exception as e:
                 import traceback
