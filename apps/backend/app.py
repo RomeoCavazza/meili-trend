@@ -2,6 +2,15 @@
 from fastapi import FastAPI  # type: ignore
 from fastapi.middleware.cors import CORSMiddleware  # type: ignore
 import time
+import logging
+
+# Configuration du logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logger = logging.getLogger(__name__)
 
 # Import des modules unifiés
 from auth_unified.auth_endpoints import auth_router
@@ -292,18 +301,18 @@ async def startup_event():
     # Vérifier Redis
     try:
         await redis.ping()
-        print("✅ Redis OK - Rate limiting activé")
+        logger.info("✅ Redis OK - Rate limiting activé")
     except Exception as e:
-        print(f"⚠️ Redis KO: {e} - Rate limiting désactivé")
+        logger.warning(f"⚠️ Redis KO: {e} - Rate limiting désactivé")
     
     # Créer les tables si elles n'existent pas
-    print("🔄 Création des tables de base de données...")
+    logger.info("🔄 Création des tables de base de données...")
     try:
         from db.base import Base, engine
         Base.metadata.create_all(bind=engine)
-        print("✅ Tables de base de données créées/vérifiées")
+        logger.info("✅ Tables de base de données créées/vérifiées")
     except Exception as e:
-        print(f"❌ Erreur création tables: {e}")
+        logger.error(f"❌ Erreur création tables: {e}")
         import traceback
         traceback.print_exc()
         raise  # Propager l'erreur pour arrêter le démarrage si problème

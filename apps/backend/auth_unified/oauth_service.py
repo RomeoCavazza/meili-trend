@@ -1,6 +1,7 @@
 # oauth/oauth_service.py
 import os
 import time
+import logging
 import httpx  # type: ignore
 from typing import Dict, Any
 from sqlalchemy.orm import Session  # type: ignore
@@ -9,6 +10,8 @@ from core.config import settings
 from db.models import User
 from .schemas import TokenResponse
 from .auth_service import AuthService
+
+logger = logging.getLogger(__name__)
 
 class OAuthService:
     def __init__(self):
@@ -26,7 +29,9 @@ class OAuthService:
     
     def start_instagram_auth(self) -> Dict[str, str]:
         """Démarrer le processus OAuth Instagram (via Facebook OAuth pour Instagram Business)"""
+        logger.info("🚀 Démarrage OAuth Instagram")
         if not settings.IG_APP_ID:
+            logger.error("❌ IG_APP_ID non configuré")
             raise HTTPException(status_code=500, detail="IG_APP_ID non configuré dans Railway")
         
         # Nettoyer les valeurs pour enlever les espaces et caractères indésirables
@@ -82,6 +87,10 @@ class OAuthService:
         # Utiliser Facebook OAuth pour Instagram Business API
         auth_url = "https://www.facebook.com/v21.0/dialog/oauth?" + "&".join(query_parts)
         
+        logger.info(f"✅ URL OAuth Instagram générée: {auth_url[:100]}...")
+        logger.info(f"📋 Redirect URI: {redirect_uri}")
+        logger.info(f"📋 App ID: {app_id[:10]}...")
+        
         return {
             "auth_url": auth_url,
             "state": state
@@ -89,7 +98,9 @@ class OAuthService:
     
     async def handle_instagram_callback(self, code: str, state: str, db: Session) -> TokenResponse:
         """Gérer le callback OAuth Instagram (via Facebook OAuth)"""
+        logger.info(f"📥 Callback Instagram reçu - Code: {code[:20]}..., State: {state}")
         if not settings.IG_APP_SECRET:
+            logger.error("❌ IG_APP_SECRET non configuré")
             raise HTTPException(status_code=500, detail="IG_APP_SECRET non configuré")
         
         # Nettoyer les valeurs pour enlever les espaces et caractères indésirables
@@ -121,6 +132,9 @@ class OAuthService:
                     error_json = r.json() if r.headers.get("content-type", "").startswith("application/json") else {}
                     error_msg = error_json.get("error", {}).get("message", "unknown_error") if isinstance(error_json.get("error"), dict) else error_json.get("error", "unknown_error")
                     error_desc = error_detail
+                    
+                    logger.error(f"❌ Erreur Instagram token exchange: {r.status_code} - {error_msg}")
+                    logger.error(f"📋 Réponse complète: {error_detail}")
                     
                     # Message détaillé pour redirect_uri invalide
                     if "redirect_uri" in error_desc.lower() or "Invalid redirect" in error_desc:
