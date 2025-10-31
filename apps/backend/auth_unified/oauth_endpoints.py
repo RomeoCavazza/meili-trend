@@ -176,16 +176,39 @@ async def tiktok_auth_callback(
     state: str = None,
     error: str = None,
     error_description: str = None,
+    error_type: str = None,
     db: Session = Depends(get_db)
 ):
     """Callback TikTok"""
-    if error:
-        from fastapi.responses import RedirectResponse
+    # Déterminer l'URL frontend
+    if "veyl.io" in settings.TIKTOK_REDIRECT_URI:
         frontend_url = "https://veyl.io/auth/callback"
-        return RedirectResponse(url=f"{frontend_url}?error={error}&error_description={error_description or ''}")
+    else:
+        frontend_url = "http://localhost:8081/auth/callback"
     
-    if code and state:
+    # Gérer les erreurs OAuth de TikTok
+    if error:
+        error_desc = quote(error_description or error_type or error)
+        error_msg = f"TikTok OAuth Error: {error}"
+        if error_type:
+            error_msg += f" (type: {error_type})"
+        if error == "unauthorized_client":
+            error_msg += ". Vérifiez que le client_key et redirect_uri sont correctement configurés dans TikTok Developer Portal."
+        return RedirectResponse(url=f"{frontend_url}?error={quote(error_msg)}&error_description={error_desc}")
+    
+    # Vérifier les paramètres requis
+    if not code or not state:
+        return RedirectResponse(url=f"{frontend_url}?error=missing_params&error_description={quote('Code ou state manquant dans la réponse TikTok')}")
+    
+    # Traiter le callback
+    try:
         return await oauth_service.handle_tiktok_callback(code, state, db)
-    
-    from fastapi.responses import RedirectResponse
-    return RedirectResponse(url="https://veyl.io/auth/callback?error=missing_params")
+    except HTTPException as e:
+        # Rediriger vers le frontend avec l'erreur détaillée
+        error_msg = quote(str(e.detail))
+        return RedirectResponse(url=f"{frontend_url}?error=oauth_error&error_description={error_msg}")
+    except Exception as e:
+        # Capturer toutes les autres exceptions
+        import traceback
+        error_msg = quote(f"Erreur interne: {str(e)}")
+        return RedirectResponse(url=f"{frontend_url}?error=internal_error&error_description={error_msg}")
