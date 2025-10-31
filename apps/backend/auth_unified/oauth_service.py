@@ -695,8 +695,8 @@ class OAuthService:
         else:
             state = secrets.token_urlsafe(32)
         
-        # Scopes demandés pour notre use case (scopes de base TikTok)
-        scopes = "user.info.basic,user.info.profile"
+        # Scopes demandés pour notre use case (correspondant à ceux configurés dans TikTok Developer Portal)
+        scopes = "user.info.basic,user.info.profile,user.info.stats,video.list"
         
         # TikTok OAuth v2 utilise client_key dans l'URL d'autorisation
         # Construire l'URL manuellement avec quote pour éviter les problèmes d'encodage
