@@ -253,9 +253,11 @@ class OAuthService:
             raise HTTPException(status_code=500, detail="FB_APP_ID non configuré")
         
         state = str(int(time.time()))
-        # Scopes de base pour Facebook Login (email nécessite review en prod, mais fonctionne en dev)
-        # public_profile est toujours disponible, email nécessite une review si mode Advanced
-        scopes = "public_profile,email"
+        # Facebook Login for Business nécessite au moins une permission business
+        # en plus de email/public_profile
+        # pages_show_list est une permission légère qui permet de lister les Pages de l'utilisateur
+        # (requis pour Facebook Login for Business, même si optionnel pour notre use case)
+        scopes = "public_profile,email,pages_show_list"
         
         params = {
             "client_id": settings.FB_APP_ID,
