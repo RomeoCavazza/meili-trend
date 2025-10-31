@@ -168,7 +168,8 @@ def debug_google_oauth():
                 "client_secret_set": client_secret_set
             }
         
-        from auth_unified.oauth_service import oauth_service
+        from auth_unified.oauth_service import OAuthService
+        oauth_service = OAuthService()
         auth_data = oauth_service.start_google_auth()
         
         return {
