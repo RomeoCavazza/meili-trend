@@ -200,6 +200,86 @@ def debug_google_oauth():
             "client_id_set": bool(settings.GOOGLE_CLIENT_ID) if hasattr(settings, 'GOOGLE_CLIENT_ID') else False
         }
 
+@app.get("/api/v1/oauth/debug/instagram")
+def debug_instagram_oauth():
+    """Debug: voir l'URL OAuth Instagram générée"""
+    from core.config import settings
+    from fastapi import HTTPException
+    
+    try:
+        redirect_uri = settings.IG_REDIRECT_URI
+        app_id_set = bool(settings.IG_APP_ID)
+        app_secret_set = bool(settings.IG_APP_SECRET)
+        
+        # Validation de l'App ID
+        app_id_raw = settings.IG_APP_ID.strip() if settings.IG_APP_ID else None
+        app_id_valid = False
+        app_id_error = None
+        
+        if app_id_raw:
+            # Facebook App ID doit être numérique et avoir entre 15 et 17 chiffres
+            if app_id_raw.isdigit() and 15 <= len(app_id_raw) <= 17:
+                app_id_valid = True
+            else:
+                app_id_error = f"App ID invalide: '{app_id_raw}' - doit être un nombre de 15-17 chiffres"
+        
+        if not app_id_set:
+            return {
+                "status": "error",
+                "message": "IG_APP_ID non configuré dans Railway",
+                "redirect_uri_used": redirect_uri,
+                "app_id_set": False,
+                "app_secret_set": app_secret_set,
+                "app_id_valid": False
+            }
+        
+        if not app_id_valid and app_id_error:
+            return {
+                "status": "error",
+                "message": app_id_error,
+                "redirect_uri_used": redirect_uri,
+                "app_id_set": app_id_set,
+                "app_id_preview": app_id_raw[:20] + "..." if app_id_raw else None,
+                "app_id_length": len(app_id_raw) if app_id_raw else 0,
+                "app_id_is_digit": app_id_raw.isdigit() if app_id_raw else False,
+                "app_secret_set": app_secret_set,
+                "instructions": "L'App ID Facebook doit être un nombre de 15-17 chiffres. Vérifiez dans Railway que IG_APP_ID ne contient pas d'espaces ou de caractères invalides."
+            }
+        
+        from auth_unified.oauth_service import OAuthService
+        oauth_service = OAuthService()
+        auth_data = oauth_service.start_instagram_auth()
+        
+        return {
+            "status": "ok",
+            "auth_url": auth_data["auth_url"],
+            "redirect_uri_used": redirect_uri,
+            "app_id_set": app_id_set,
+            "app_id_valid": app_id_valid,
+            "app_id_preview": app_id_raw[:10] + "..." if app_id_raw else None,
+            "app_id_length": len(app_id_raw) if app_id_raw else 0,
+            "app_secret_set": app_secret_set,
+            "state": auth_data["state"],
+            "instructions": "Vérifier que 'redirect_uri_used' correspond EXACTEMENT à celui dans Facebook Developer Console > Valid OAuth Redirect URIs"
+        }
+    except HTTPException as e:
+        return {
+            "status": "error",
+            "message": e.detail,
+            "status_code": e.status_code,
+            "redirect_uri": settings.IG_REDIRECT_URI if hasattr(settings, 'IG_REDIRECT_URI') else "N/A",
+            "app_id_set": bool(settings.IG_APP_ID) if hasattr(settings, 'IG_APP_ID') else False
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "status": "error",
+            "message": str(e),
+            "traceback": traceback.format_exc(),
+            "redirect_uri": settings.IG_REDIRECT_URI if hasattr(settings, 'IG_REDIRECT_URI') else "N/A",
+            "app_id_set": bool(settings.IG_APP_ID) if hasattr(settings, 'IG_APP_ID') else False
+        }
+
 # =====================================================
 # LIFECYCLE EVENTS - REDIS STARTUP CHECK
 # =====================================================

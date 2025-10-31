@@ -27,7 +27,7 @@ class OAuthService:
     def start_instagram_auth(self) -> Dict[str, str]:
         """Démarrer le processus OAuth Instagram (via Facebook OAuth pour Instagram Business)"""
         if not settings.IG_APP_ID:
-            raise HTTPException(status_code=500, detail="IG_APP_ID non configuré")
+            raise HTTPException(status_code=500, detail="IG_APP_ID non configuré dans Railway")
         
         # Nettoyer les valeurs pour enlever les espaces et caractères indésirables
         app_id = settings.IG_APP_ID.strip() if settings.IG_APP_ID else None
@@ -37,6 +37,23 @@ class OAuthService:
             raise HTTPException(status_code=500, detail="IG_APP_ID vide ou non configuré dans Railway")
         if not redirect_uri:
             raise HTTPException(status_code=500, detail="IG_REDIRECT_URI vide ou non configuré dans Railway")
+        
+        # Valider le format de l'App ID Facebook (doit être numérique, 15-17 chiffres)
+        if not app_id.isdigit():
+            raise HTTPException(
+                status_code=500,
+                detail=f"IG_APP_ID invalide: '{app_id}' contient des caractères non numériques. "
+                       f"L'App ID Facebook doit être un nombre de 15-17 chiffres uniquement. "
+                       f"Vérifiez dans Railway que IG_APP_ID ne contient pas d'espaces ou de caractères invalides."
+            )
+        
+        if not (15 <= len(app_id) <= 17):
+            raise HTTPException(
+                status_code=500,
+                detail=f"IG_APP_ID invalide: '{app_id}' a {len(app_id)} chiffres. "
+                       f"L'App ID Facebook doit avoir entre 15 et 17 chiffres. "
+                       f"App ID actuel (premiers caractères): {app_id[:10]}..."
+            )
         
         state = str(int(time.time()))
         # Scopes pour Instagram Business API (via Facebook)
