@@ -18,9 +18,17 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
         sessionStorage.setItem('redirectAfterLogin', location.pathname + location.search);
         navigate('/auth');
       } else {
-        console.log('⚠️ ProtectedRoute: Token exists but no user. This might be a state sync issue.');
-        // Token existe mais user est null - peut-être un problème de synchronisation
-        // Attendre un peu pour laisser le temps au AuthContext de charger
+        console.log('⚠️ ProtectedRoute: Token exists but no user. Waiting for AuthContext to load...');
+        // Token existe mais user est null - attendre un peu plus pour laisser le temps au AuthContext de charger
+        // Ne pas rediriger immédiatement, attendre que le contexte charge
+        const timer = setTimeout(() => {
+          // Si après 2 secondes user est toujours null malgré le token, vérifier à nouveau
+          if (!user && token) {
+            console.log('⚠️ ProtectedRoute: User still null after delay, token might be invalid');
+            // Ne pas rediriger automatiquement, laisser AuthContext gérer
+          }
+        }, 2000);
+        return () => clearTimeout(timer);
       }
     }
   }, [user, loading, navigate, location]);

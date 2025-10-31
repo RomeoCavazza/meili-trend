@@ -60,10 +60,12 @@ export default function AuthCallback() {
         .then((userData) => {
           console.log('✅ User data received:', userData);
           setUser(userData);
-          // Utiliser window.location.href pour forcer un rechargement et éviter les problèmes de state
+          // Attendre un peu plus pour que le state soit mis à jour avant redirection
+          // Utiliser window.location.href pour forcer un rechargement complet
           setTimeout(() => {
+            console.log('🚀 Redirection vers /analytics');
             window.location.href = '/analytics';
-          }, 100);
+          }, 300);
         })
         .catch((error) => {
           console.error('❌ Error fetching user info:', error);
@@ -80,8 +82,9 @@ export default function AuthCallback() {
               is_active: true
             });
             setTimeout(() => {
+              console.log('🚀 Redirection vers /analytics (fallback)');
               window.location.href = '/analytics';
-            }, 100);
+            }, 300);
           } else {
             console.error('❌ Missing userId/email for fallback');
             navigate('/auth?error=invalid_token');
@@ -101,8 +104,9 @@ export default function AuthCallback() {
         is_active: true
       });
       setTimeout(() => {
+        console.log('🚀 Redirection vers /analytics (fallback userId)');
         window.location.href = '/analytics';
-      }, 100);
+      }, 300);
     } else {
       // En cas d'erreur, rediriger vers la page de connexion
       console.error('Missing required parameters:', { token, userId, email });
