@@ -35,12 +35,24 @@ export default function AuthCallback() {
     // Si on a un token, récupérer les infos utilisateur depuis le backend
     if (token) {
       // Décoder le token si nécessaire (il est URL-encodé)
-      const decodedToken = decodeURIComponent(token);
+      let decodedToken: string;
+      try {
+        decodedToken = decodeURIComponent(token);
+      } catch (e) {
+        // Si le décodage échoue, utiliser le token tel quel
+        decodedToken = token;
+      }
+      
+      console.log('🔑 Token décodé, longueur:', decodedToken.length);
+      
+      // Stocker le token immédiatement
       localStorage.setItem('token', decodedToken);
       setToken(decodedToken);
       
       // Récupérer les infos utilisateur depuis l'API pour s'assurer qu'elles sont à jour
       const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'https://insidr-production.up.railway.app');
+      
+      console.log('📡 Appel /api/v1/auth/me avec API_BASE:', API_BASE);
       
       fetch(`${API_BASE}/api/v1/auth/me`, {
         headers: {
@@ -89,7 +101,12 @@ export default function AuthCallback() {
             }, 300);
           } else {
             console.error('❌ Missing userId/email for fallback');
-            navigate('/auth?error=invalid_token');
+            // Même sans userId/email, si on a un token, essayer de rediriger vers /analytics
+            // Le AuthContext devrait charger le user depuis le token
+            console.log('⚠️ Utilisation du token seul, redirection vers /analytics');
+            setTimeout(() => {
+              window.location.replace(window.location.origin + '/analytics');
+            }, 500);
           }
         });
     } else if (userId && email) {
