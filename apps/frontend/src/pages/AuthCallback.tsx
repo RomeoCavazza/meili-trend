@@ -32,7 +32,8 @@ export default function AuthCallback() {
       return;
     }
 
-    // Si on a un token, récupérer les infos utilisateur depuis le backend
+    // Si on a un token, stocker immédiatement et rediriger vers /analytics
+    // Le AuthContext chargera le user depuis le token au chargement de /analytics
     if (token) {
       // Décoder le token si nécessaire (il est URL-encodé)
       let decodedToken: string;
@@ -45,70 +46,29 @@ export default function AuthCallback() {
       
       console.log('🔑 Token décodé, longueur:', decodedToken.length);
       
-      // Stocker le token immédiatement
+      // Stocker le token immédiatement - C'EST TOUT CE QU'ON A BESOIN
       localStorage.setItem('token', decodedToken);
       setToken(decodedToken);
       
-      // Récupérer les infos utilisateur depuis l'API pour s'assurer qu'elles sont à jour
-      const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'https://insidr-production.up.railway.app');
-      
-      console.log('📡 Appel /api/v1/auth/me avec API_BASE:', API_BASE);
-      
-      fetch(`${API_BASE}/api/v1/auth/me`, {
-        headers: {
-          'Authorization': `Bearer ${decodedToken}`
-        }
-      })
-        .then(response => {
-          if (!response.ok) {
-            console.error('❌ /api/v1/auth/me failed:', response.status, response.statusText);
-            return response.text().then(text => {
-              console.error('Response body:', text);
-              throw new Error(`HTTP ${response.status}: ${text}`);
-            });
-          }
-          return response.json();
-        })
-        .then((userData) => {
-          console.log('✅ User data received:', userData);
-          // Mettre à jour le state et attendre qu'il soit propagé
-          setUser(userData);
-          setToken(decodedToken);
-          
-          // Forcer un rechargement complet pour éviter les problèmes de state
-          // Nettoyer les paramètres URL pour éviter les loops
-          const cleanUrl = window.location.origin + '/analytics';
-          console.log('🚀 Redirection vers /analytics');
-          window.location.replace(cleanUrl);
-        })
-        .catch((error) => {
-          console.error('❌ Error fetching user info:', error);
-          // Fallback: utiliser les paramètres URL si disponibles
-          if (userId && email) {
-            const decodedEmail = email ? decodeURIComponent(email) : '';
-            const decodedName = name ? decodeURIComponent(name) : '';
-            setUser({
-              id: parseInt(userId),
-              email: decodedEmail,
-              name: decodedName || decodedEmail.split('@')[0],
-              role: 'user',
-              created_at: new Date().toISOString(),
-              is_active: true
-            });
-            setTimeout(() => {
-              console.log('🚀 Redirection vers /analytics (fallback)');
-              window.location.href = '/analytics';
-            }, 300);
-          } else {
-            console.error('❌ Missing userId/email for fallback');
-            // Même sans userId/email, si on a un token, essayer de rediriger vers /analytics
-            // Le AuthContext devrait charger le user depuis le token
-            console.log('⚠️ Utilisation du token seul, redirection vers /analytics');
-            setTimeout(() => {
-              window.location.replace(window.location.origin + '/analytics');
-            }, 500);
-          }
+      // Si on a aussi userId/email dans l'URL, créer un user temporaire pour éviter ProtectedRoute
+      if (userId && email) {
+        const decodedEmail = email ? decodeURIComponent(email) : '';
+        const decodedName = name ? decodeURIComponent(name) : '';
+        setUser({
+          id: parseInt(userId),
+          email: decodedEmail,
+          name: decodedName || decodedEmail.split('@')[0],
+          role: 'user',
+          created_at: new Date().toISOString(),
+          is_active: true
         });
+      }
+      
+      // Rediriger IMMÉDIATEMENT vers /analytics
+      // Le AuthContext chargera le vrai user depuis /api/v1/auth/me au chargement
+      console.log('🚀 Redirection immédiate vers /analytics');
+      window.location.replace(window.location.origin + '/analytics');
+      return;
     } else if (userId && email) {
       // Fallback: utiliser les paramètres URL si le token n'est pas dans l'URL
       // (cas où on stocke le token différemment)
