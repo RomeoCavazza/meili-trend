@@ -276,13 +276,18 @@ class OAuthService:
             
             # Rediriger vers le frontend avec le token
             from fastapi.responses import RedirectResponse  # type: ignore
+            from urllib.parse import quote
             # settings est déjà importé en haut du fichier
             # Utiliser l'URL de production ou localhost selon l'environnement
             if os.getenv("ENVIRONMENT") == "production" or "veyl.io" in settings.IG_REDIRECT_URI:
                 frontend_url = "https://veyl.io/auth/callback"
             else:
                 frontend_url = "http://localhost:8081/auth/callback"
-            redirect_url = f"{frontend_url}?token={access_token}&user_id={user.id}&email={user.email}&name={user.name}"
+            # Encoder correctement tous les paramètres pour éviter les problèmes avec les caractères spéciaux du JWT
+            encoded_token = quote(access_token, safe='')
+            encoded_email = quote(user.email or '', safe='')
+            encoded_name = quote(user.name or '', safe='')
+            redirect_url = f"{frontend_url}?token={encoded_token}&user_id={user.id}&email={encoded_email}&name={encoded_name}"
             return RedirectResponse(url=redirect_url)
         
         raise HTTPException(status_code=400, detail="Erreur OAuth Instagram")
