@@ -78,8 +78,9 @@ async def auth_callback(
 
 @oauth_router.get("/facebook/start")
 def facebook_auth_start():
-    """Démarrer OAuth Facebook"""
-    return oauth_service.start_facebook_auth()
+    """Démarrer OAuth Facebook - Redirection directe"""
+    auth_data = oauth_service.start_facebook_auth()
+    return RedirectResponse(url=auth_data["auth_url"])
 
 @oauth_router.get("/facebook/callback")
 async def facebook_auth_callback(
