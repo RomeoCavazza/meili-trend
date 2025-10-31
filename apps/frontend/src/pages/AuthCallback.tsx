@@ -15,9 +15,18 @@ export default function AuthCallback() {
     const error = searchParams.get('error');
     const errorDescription = searchParams.get('error_description');
 
+    console.log('📥 AuthCallback - Paramètres reçus:', { 
+      hasToken: !!token, 
+      hasUserId: !!userId, 
+      hasEmail: !!email,
+      hasName: !!name,
+      error,
+      errorDescription
+    });
+
     // Gérer les erreurs OAuth
     if (error) {
-      console.error('OAuth error:', error, errorDescription);
+      console.error('❌ OAuth error:', error, errorDescription);
       // TODO: Afficher un toast d'erreur si disponible
       navigate('/auth?error=' + encodeURIComponent(errorDescription || error));
       return;
@@ -25,55 +34,75 @@ export default function AuthCallback() {
 
     // Si on a un token, récupérer les infos utilisateur depuis le backend
     if (token) {
-      localStorage.setItem('token', token);
-      setToken(token);
+      // Décoder le token si nécessaire (il est URL-encodé)
+      const decodedToken = decodeURIComponent(token);
+      localStorage.setItem('token', decodedToken);
+      setToken(decodedToken);
       
       // Récupérer les infos utilisateur depuis l'API pour s'assurer qu'elles sont à jour
       const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'https://insidr-production.up.railway.app');
+      
       fetch(`${API_BASE}/api/v1/auth/me`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${decodedToken}`
         }
       })
         .then(response => {
-          if (response.ok) {
-            return response.json();
+          if (!response.ok) {
+            console.error('❌ /api/v1/auth/me failed:', response.status, response.statusText);
+            return response.text().then(text => {
+              console.error('Response body:', text);
+              throw new Error(`HTTP ${response.status}: ${text}`);
+            });
           }
-          throw new Error('Failed to fetch user info');
+          return response.json();
         })
         .then((userData) => {
+          console.log('✅ User data received:', userData);
           setUser(userData);
-          navigate('/analytics');
+          // Utiliser window.location.href pour forcer un rechargement et éviter les problèmes de state
+          setTimeout(() => {
+            window.location.href = '/analytics';
+          }, 100);
         })
         .catch((error) => {
-          console.error('Error fetching user info:', error);
+          console.error('❌ Error fetching user info:', error);
           // Fallback: utiliser les paramètres URL si disponibles
           if (userId && email) {
+            const decodedEmail = email ? decodeURIComponent(email) : '';
+            const decodedName = name ? decodeURIComponent(name) : '';
             setUser({
               id: parseInt(userId),
-              email: email,
-              name: name || email.split('@')[0],
+              email: decodedEmail,
+              name: decodedName || decodedEmail.split('@')[0],
               role: 'user',
               created_at: new Date().toISOString(),
               is_active: true
             });
-            navigate('/analytics');
+            setTimeout(() => {
+              window.location.href = '/analytics';
+            }, 100);
           } else {
+            console.error('❌ Missing userId/email for fallback');
             navigate('/auth?error=invalid_token');
           }
         });
     } else if (userId && email) {
       // Fallback: utiliser les paramètres URL si le token n'est pas dans l'URL
       // (cas où on stocke le token différemment)
+      const decodedEmail = decodeURIComponent(email);
+      const decodedName = name ? decodeURIComponent(name) : '';
       setUser({
         id: parseInt(userId),
-        email: email,
-        name: name || email.split('@')[0],
+        email: decodedEmail,
+        name: decodedName || decodedEmail.split('@')[0],
         role: 'user',
         created_at: new Date().toISOString(),
         is_active: true
       });
-      navigate('/analytics');
+      setTimeout(() => {
+        window.location.href = '/analytics';
+      }, 100);
     } else {
       // En cas d'erreur, rediriger vers la page de connexion
       console.error('Missing required parameters:', { token, userId, email });
