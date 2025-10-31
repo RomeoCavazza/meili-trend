@@ -165,9 +165,9 @@ async def google_auth_callback(
         return RedirectResponse(url=f"{frontend_url}?error=internal_error&error_description={error_msg}")
 
 @oauth_router.get("/tiktok/start")
-def tiktok_auth_start():
+def tiktok_auth_start(user_id: int = None):
     """Démarrer OAuth TikTok - Redirection directe"""
-    auth_data = oauth_service.start_tiktok_auth()
+    auth_data = oauth_service.start_tiktok_auth(user_id=user_id)
     return RedirectResponse(url=auth_data["auth_url"])
 
 @oauth_router.get("/tiktok/callback")

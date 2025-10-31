@@ -641,21 +641,43 @@ class OAuthService:
         
         raise HTTPException(status_code=400, detail="Erreur OAuth Google: access_token ou google_user_id manquant")
     
-    def start_tiktok_auth(self) -> Dict[str, str]:
-        """Démarrer le processus OAuth TikTok"""
+    def start_tiktok_auth(self, user_id: int = None) -> Dict[str, str]:
+        """Démarrer le processus OAuth TikTok
+        
+        Args:
+            user_id: ID de l'utilisateur actuellement connecté (pour lier le compte OAuth au User existant)
+        """
         if not settings.TIKTOK_CLIENT_KEY:
             raise HTTPException(status_code=500, detail="TIKTOK_CLIENT_KEY non configuré")
         
-        client_key = settings.TIKTOK_CLIENT_KEY
-        redirect_uri = settings.TIKTOK_REDIRECT_URI
+        # Nettoyer le client_key pour enlever les espaces
+        client_key = settings.TIKTOK_CLIENT_KEY.strip() if settings.TIKTOK_CLIENT_KEY else None
+        redirect_uri = settings.TIKTOK_REDIRECT_URI.strip() if settings.TIKTOK_REDIRECT_URI else None
         
-        # Générer un state sécurisé
+        if not client_key:
+            raise HTTPException(status_code=500, detail="TIKTOK_CLIENT_KEY vide ou non configuré")
+        if not redirect_uri:
+            raise HTTPException(status_code=500, detail="TIKTOK_REDIRECT_URI vide ou non configuré")
+        
+        # Générer un state sécurisé (encoder user_id si fourni)
         import secrets
-        state = secrets.token_urlsafe(32)
+        import hashlib
+        if user_id:
+            # Encoder l'user_id dans le state de manière sécurisée
+            timestamp = str(int(time.time()))
+            state_data = f"{timestamp}_{user_id}"
+            state_hash = hashlib.sha256(f"{state_data}_{settings.OAUTH_STATE_SECRET}".encode()).hexdigest()[:8]
+            state = f"{timestamp}_{user_id}_{state_hash}"
+        else:
+            state = secrets.token_urlsafe(32)
         
-        # Scopes demandés pour notre use case
-        scopes = "user.info.basic,user.info.profile,user.info.stats,video.list"
+        # Scopes demandés pour notre use case (scopes de base TikTok)
+        scopes = "user.info.basic,user.info.profile"
         
+        # TikTok OAuth v2 utilise client_key dans l'URL d'autorisation
+        # Construire l'URL manuellement avec quote pour éviter les problèmes d'encodage
+        from urllib.parse import quote
+        query_parts = []
         params = {
             "client_key": client_key,
             "redirect_uri": redirect_uri,
@@ -664,8 +686,15 @@ class OAuthService:
             "state": state
         }
         
-        from urllib.parse import urlencode
-        auth_url = "https://www.tiktok.com/v2/auth/authorize/?" + urlencode(params)
+        for key, value in params.items():
+            # Pour redirect_uri, garder : et / non encodés
+            if key == "redirect_uri":
+                encoded_value = quote(str(value), safe="/:")
+            else:
+                encoded_value = quote(str(value), safe="")
+            query_parts.append(f"{quote(str(key), safe='')}={encoded_value}")
+        
+        auth_url = "https://www.tiktok.com/v2/auth/authorize/?" + "&".join(query_parts)
         
         return {
             "auth_url": auth_url,
@@ -673,13 +702,40 @@ class OAuthService:
         }
     
     async def handle_tiktok_callback(self, code: str, state: str, db: Session) -> TokenResponse:
-        """Gérer le callback OAuth TikTok"""
+        """Gérer le callback OAuth TikTok
+        
+        Extrait l'user_id du state si présent pour lier le compte OAuth au User existant
+        """
+        # Décoder l'user_id depuis le state si présent
+        linked_user_id = None
+        import hashlib
+        try:
+            parts = state.split('_')
+            if len(parts) >= 3:
+                timestamp, user_id_str, state_hash = parts[0], parts[1], parts[2]
+                # Vérifier le hash pour éviter la manipulation
+                expected_hash = hashlib.sha256(f"{timestamp}_{user_id_str}_{settings.OAUTH_STATE_SECRET}".encode()).hexdigest()[:8]
+                if state_hash == expected_hash:
+                    linked_user_id = int(user_id_str)
+                    logger.info(f"📎 Liaison TikTok OAuth au User ID: {linked_user_id}")
+        except (ValueError, IndexError):
+            # State ne contient pas d'user_id ou est un token sécurisé classique
+            pass
+        
         if not settings.TIKTOK_CLIENT_SECRET:
             raise HTTPException(status_code=500, detail="TIKTOK_CLIENT_SECRET non configuré")
         
-        client_key = settings.TIKTOK_CLIENT_KEY
-        client_secret = settings.TIKTOK_CLIENT_SECRET
-        redirect_uri = settings.TIKTOK_REDIRECT_URI
+        # Nettoyer les valeurs
+        client_key = settings.TIKTOK_CLIENT_KEY.strip() if settings.TIKTOK_CLIENT_KEY else None
+        client_secret = settings.TIKTOK_CLIENT_SECRET.strip() if settings.TIKTOK_CLIENT_SECRET else None
+        redirect_uri = settings.TIKTOK_REDIRECT_URI.strip() if settings.TIKTOK_REDIRECT_URI else None
+        
+        if not client_key:
+            raise HTTPException(status_code=500, detail="TIKTOK_CLIENT_KEY vide ou non configuré")
+        if not client_secret:
+            raise HTTPException(status_code=500, detail="TIKTOK_CLIENT_SECRET vide ou non configuré")
+        if not redirect_uri:
+            raise HTTPException(status_code=500, detail="TIKTOK_REDIRECT_URI vide ou non configuré")
         
         async with httpx.AsyncClient(timeout=20) as client:
             # 1) Échanger le code contre un access token
