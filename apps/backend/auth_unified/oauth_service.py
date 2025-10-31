@@ -388,8 +388,8 @@ class OAuthService:
                 # Rediriger vers le frontend avec le token
                 from fastapi.responses import RedirectResponse  # type: ignore
                 from urllib.parse import quote
-                from core.config import settings
                 # Utiliser l'URL de production ou localhost selon l'environnement
+                # settings est déjà importé en haut du fichier
                 if os.getenv("ENVIRONMENT") == "production" or "veyl.io" in settings.GOOGLE_REDIRECT_URI:
                     frontend_url = "https://veyl.io/auth/callback"
                 else:
