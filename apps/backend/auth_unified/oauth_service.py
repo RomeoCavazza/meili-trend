@@ -710,6 +710,10 @@ class OAuthService:
             "state": state
         }
         
+        logger.info(f"🔑 TikTok OAuth - Client Key: {client_key[:10]}... (longueur: {len(client_key) if client_key else 0})")
+        logger.info(f"🔗 TikTok OAuth - Redirect URI: {redirect_uri}")
+        logger.info(f"📋 TikTok OAuth - Scopes: {scopes}")
+        
         for key, value in params.items():
             # Pour redirect_uri, garder : et / non encodés
             if key == "redirect_uri":
@@ -719,6 +723,7 @@ class OAuthService:
             query_parts.append(f"{quote(str(key), safe='')}={encoded_value}")
         
         auth_url = "https://www.tiktok.com/v2/auth/authorize/?" + "&".join(query_parts)
+        logger.info(f"✅ TikTok OAuth URL générée: {auth_url[:150]}...")
         
         return {
             "auth_url": auth_url,
