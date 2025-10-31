@@ -62,7 +62,9 @@ class OAuthService:
         
         state = str(int(time.time()))
         # Scopes pour Instagram Business API (via Facebook)
-        scopes = "instagram_basic,instagram_business_basic,pages_show_list,pages_read_engagement"
+        # Scopes valides: pages_show_list, pages_read_engagement, instagram_basic, pages_manage_posts (si besoin)
+        # instagram_business_basic n'existe plus - utiliser instagram_basic à la place
+        scopes = "pages_show_list,pages_read_engagement,instagram_basic"
         
         # Construire l'URL manuellement avec quote (comme pour Google) pour éviter les problèmes d'encodage
         from urllib.parse import quote
