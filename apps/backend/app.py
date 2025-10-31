@@ -159,6 +159,33 @@ async def test_tiktok():
             "message": f"Erreur connexion TikTok: {str(e)}"
         }
 
+@app.get("/api/v1/oauth/debug/tiktok")
+def debug_tiktok_oauth():
+    """Debug: voir l'URL OAuth TikTok générée et la configuration"""
+    from auth_unified.oauth_service import OAuthService
+    oauth_service = OAuthService()
+    
+    try:
+        auth_data = oauth_service.start_tiktok_auth()
+        return {
+            "status": "ok",
+            "auth_url": auth_data["auth_url"],
+            "state": auth_data["state"],
+            "config": {
+                "has_client_key": bool(os.getenv("TIKTOK_CLIENT_KEY")),
+                "client_key_length": len(os.getenv("TIKTOK_CLIENT_KEY", "")),
+                "client_key_preview": os.getenv("TIKTOK_CLIENT_KEY", "")[:10] + "..." if os.getenv("TIKTOK_CLIENT_KEY") else None,
+                "redirect_uri": os.getenv("TIKTOK_REDIRECT_URI", "not_set")
+            }
+        }
+    except Exception as e:
+        import traceback
+        return {
+            "status": "error",
+            "error": str(e),
+            "traceback": traceback.format_exc()
+        }
+
 @app.get("/api/v1/oauth/debug/google")
 def debug_google_oauth():
     """Debug: voir l'URL OAuth Google générée"""
