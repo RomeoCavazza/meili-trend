@@ -30,9 +30,15 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User:
         
         token = auth_header.split(" ")[1]
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        user_id: int = payload.get("sub")
-        if user_id is None:
+        user_id_str = payload.get("sub")
+        if user_id_str is None:
             raise HTTPException(status_code=401, detail="Token invalide")
+        
+        # Convertir en int (sub est créé comme string)
+        try:
+            user_id = int(user_id_str)
+        except (ValueError, TypeError):
+            raise HTTPException(status_code=401, detail="Token invalide: user_id invalide")
     except JWTError:
         raise HTTPException(status_code=401, detail="Token invalide")
     
