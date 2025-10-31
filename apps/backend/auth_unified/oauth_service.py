@@ -115,7 +115,26 @@ class OAuthService:
         }
     
     async def handle_instagram_callback(self, code: str, state: str, db: Session) -> TokenResponse:
-        """Gérer le callback OAuth Instagram (via Facebook OAuth)"""
+        """Gérer le callback OAuth Instagram (via Facebook OAuth)
+        
+        Extrait l'user_id du state si présent pour lier le compte OAuth au User existant
+        """
+        # Décoder l'user_id depuis le state si présent
+        linked_user_id = None
+        import hashlib
+        try:
+            parts = state.split('_')
+            if len(parts) >= 3:
+                timestamp, user_id_str, state_hash = parts[0], parts[1], parts[2]
+                # Vérifier le hash pour éviter la manipulation
+                expected_hash = hashlib.sha256(f"{timestamp}_{user_id_str}_{settings.OAUTH_STATE_SECRET}".encode()).hexdigest()[:8]
+                if state_hash == expected_hash:
+                    linked_user_id = int(user_id_str)
+                    logger.info(f"📎 Liaison Instagram OAuth au User ID: {linked_user_id}")
+        except (ValueError, IndexError):
+            # State ne contient pas d'user_id ou est un timestamp simple
+            pass
+        
         logger.info(f"📥 Callback Instagram reçu - Code: {code[:20]}..., State: {state}")
         if not settings.IG_APP_SECRET:
             logger.error("❌ IG_APP_SECRET non configuré")
