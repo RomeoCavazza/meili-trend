@@ -59,13 +59,15 @@ export default function AuthCallback() {
         })
         .then((userData) => {
           console.log('✅ User data received:', userData);
+          // Mettre à jour le state et attendre qu'il soit propagé
           setUser(userData);
-          // Attendre un peu plus pour que le state soit mis à jour avant redirection
-          // Utiliser window.location.href pour forcer un rechargement complet
-          setTimeout(() => {
-            console.log('🚀 Redirection vers /analytics');
-            window.location.href = '/analytics';
-          }, 300);
+          setToken(decodedToken);
+          
+          // Forcer un rechargement complet pour éviter les problèmes de state
+          // Nettoyer les paramètres URL pour éviter les loops
+          const cleanUrl = window.location.origin + '/analytics';
+          console.log('🚀 Redirection vers /analytics');
+          window.location.replace(cleanUrl);
         })
         .catch((error) => {
           console.error('❌ Error fetching user info:', error);
