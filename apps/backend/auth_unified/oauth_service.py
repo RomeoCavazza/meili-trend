@@ -203,24 +203,41 @@ class OAuthService:
                     break
 
         if long_token and ig_user_id:
-            # Créer ou récupérer l'utilisateur
-            user = self.create_or_get_user(
-                db, 
-                email=f"instagram_{ig_user_id}@insidr.dev",
-                name=f"Instagram User {ig_user_id}"
-            )
-            
-            # Sauvegarder le token Instagram dans OAuthAccount (pour usage API futur)
+            # Vérifier si un OAuthAccount Instagram existe déjà pour cet utilisateur Instagram
             from db.models import OAuthAccount
-            oauth_account = db.query(OAuthAccount).filter(
-                OAuthAccount.user_id == user.id,
-                OAuthAccount.provider == "instagram"
+            existing_oauth = db.query(OAuthAccount).filter(
+                OAuthAccount.provider == "instagram",
+                OAuthAccount.provider_user_id == str(ig_user_id)
             ).first()
             
-            if oauth_account:
-                oauth_account.access_token = long_token
-                oauth_account.provider_user_id = str(ig_user_id)
+            # Si l'OAuth account existe, récupérer le User associé
+            if existing_oauth:
+                user = db.query(User).filter(User.id == existing_oauth.user_id).first()
+                # Mettre à jour le token
+                existing_oauth.access_token = long_token
             else:
+                # Chercher un User existant avec un email réel (pas instagram_xxx ou facebook_xxx)
+                # pour permettre la liaison de plusieurs OAuth accounts au même User
+                # Note: Instagram Business API passe par Facebook, donc on peut essayer de trouver via Facebook OAuth
+                user = None
+                
+                # Chercher via Facebook OAuth account si existe (Instagram Business passe par Facebook)
+                fb_oauth = db.query(OAuthAccount).filter(
+                    OAuthAccount.provider == "facebook"
+                ).first()
+                
+                if fb_oauth:
+                    user = db.query(User).filter(User.id == fb_oauth.user_id).first()
+                
+                # Si pas de User trouvé, créer un nouveau User
+                if not user:
+                    user = self.create_or_get_user(
+                        db, 
+                        email=f"instagram_{ig_user_id}@insidr.dev",
+                        name=f"Instagram User {ig_user_id}"
+                    )
+                
+                # Créer l'OAuthAccount Instagram
                 oauth_account = OAuthAccount(
                     user_id=user.id,
                     provider="instagram",
