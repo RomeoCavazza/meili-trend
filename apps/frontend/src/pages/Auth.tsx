@@ -116,7 +116,7 @@ export default function Auth() {
               {/* Social Login Buttons - Style uniformisé avec footer */}
               <div className="text-center mb-4">
                 <p className="text-sm text-muted-foreground mb-3">Sign in with:</p>
-                <div className="flex justify-center gap-3">
+                <div className="flex justify-center gap-3 mb-2">
                   <Button
                     variant="outline"
                     size="icon"
@@ -145,10 +145,14 @@ export default function Auth() {
                   <Button 
                     variant="outline" 
                     size="icon" 
-                    className="rounded-xl border-border hover:bg-accent/50"
+                    className="rounded-xl border-border hover:bg-accent/50 group relative"
                     onClick={handleInstagramSignIn}
+                    title="Se connecter avec Instagram - Accès aux tendances et analytics"
                   >
                     <Instagram className="h-5 w-5 text-muted-foreground hover:text-foreground" />
+                    <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-popover text-popover-foreground text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-10 border">
+                      Instagram Business
+                    </span>
                   </Button>
                   <Button 
                     variant="outline" 
@@ -167,6 +171,9 @@ export default function Auth() {
                     <TikTokIcon className="h-5 w-5 text-muted-foreground hover:text-foreground" />
                   </Button>
                 </div>
+                <p className="text-xs text-muted-foreground px-4">
+                  Instagram nécessite une connexion via Facebook pour accéder aux tendances et analytics
+                </p>
                 <p className="text-sm text-muted-foreground mt-4">or:</p>
               </div>
 
