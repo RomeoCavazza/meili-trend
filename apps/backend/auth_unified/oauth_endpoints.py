@@ -3,6 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
 from db.base import get_db
+from core.config import settings
+from urllib.parse import quote
 from .oauth_service import OAuthService
 
 oauth_router = APIRouter(prefix="/api/v1/auth", tags=["oauth"])
@@ -23,10 +25,7 @@ async def instagram_auth_callback(
     db: Session = Depends(get_db)
 ):
     """Callback Instagram"""
-    from fastapi.responses import RedirectResponse
-    from fastapi import HTTPException
-    from core.config import settings
-    from urllib.parse import quote
+    # settings et quote sont déjà importés en haut du fichier
     
     # Déterminer l'URL frontend
     if "veyl.io" in settings.IG_REDIRECT_URI:
@@ -106,10 +105,7 @@ async def google_auth_callback(
     db: Session = Depends(get_db)
 ):
     """Callback Google"""
-    from fastapi.responses import RedirectResponse
-    from fastapi import HTTPException
-    from core.config import settings
-    from urllib.parse import quote
+    # settings et quote sont déjà importés en haut du fichier
     
     # Déterminer l'URL frontend
     if "veyl.io" in settings.GOOGLE_REDIRECT_URI:
