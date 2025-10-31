@@ -253,9 +253,8 @@ class OAuthService:
         if not settings.GOOGLE_CLIENT_ID:
             raise HTTPException(status_code=500, detail="GOOGLE_CLIENT_ID non configuré")
         
-        from urllib.parse import urlencode
-        
-        client_id = settings.GOOGLE_CLIENT_ID
+        # Nettoyer le client_id pour enlever les espaces et caractères indésirables
+        client_id = settings.GOOGLE_CLIENT_ID.strip()
         redirect_uri = settings.GOOGLE_REDIRECT_URI
         
         state = str(int(time.time()))
@@ -271,17 +270,18 @@ class OAuthService:
             "prompt": "consent"
         }
         
-        # Construire l'URL manuellement pour éviter les problèmes d'encodage
+        # Construire l'URL manuellement avec quote (pas quote_plus) pour éviter les +
         from urllib.parse import quote
         query_parts = []
         for key, value in params.items():
-            # Pour redirect_uri, on encode les caractères spéciaux mais on garde :// et /
+            # Pour redirect_uri, garder : et / non encodés
             if key == "redirect_uri":
                 encoded_value = quote(str(value), safe="/:")
             else:
-                # Pour les autres paramètres, on encode normalement (espaces deviennent %20)
+                # Pour les autres paramètres, encoder normalement avec quote (pas quote_plus)
+                # quote encode les espaces en %20, pas en +
                 encoded_value = quote(str(value), safe="")
-            query_parts.append(f"{key}={encoded_value}")
+            query_parts.append(f"{quote(str(key), safe='')}={encoded_value}")
         auth_url = "https://accounts.google.com/o/oauth2/v2/auth?" + "&".join(query_parts)
         
         return {
