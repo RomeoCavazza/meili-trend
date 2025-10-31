@@ -11,9 +11,9 @@ oauth_router = APIRouter(prefix="/api/v1/auth", tags=["oauth"])
 oauth_service = OAuthService()
 
 @oauth_router.get("/instagram/start")
-def instagram_auth_start():
+def instagram_auth_start(user_id: int = None):
     """Démarrer OAuth Instagram - Redirection directe"""
-    auth_data = oauth_service.start_instagram_auth()
+    auth_data = oauth_service.start_instagram_auth(user_id=user_id)
     return RedirectResponse(url=auth_data["auth_url"])
 
 @oauth_router.get("/instagram/callback")
@@ -77,9 +77,9 @@ async def auth_callback(
     return RedirectResponse(url="http://localhost:8081/auth/callback")
 
 @oauth_router.get("/facebook/start")
-def facebook_auth_start():
+def facebook_auth_start(user_id: int = None):
     """Démarrer OAuth Facebook - Redirection directe"""
-    auth_data = oauth_service.start_facebook_auth()
+    auth_data = oauth_service.start_facebook_auth(user_id=user_id)
     return RedirectResponse(url=auth_data["auth_url"])
 
 @oauth_router.get("/facebook/callback")

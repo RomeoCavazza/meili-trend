@@ -27,9 +27,13 @@ class OAuthService:
             db.refresh(user)
         return user
     
-    def start_instagram_auth(self) -> Dict[str, str]:
-        """Démarrer le processus OAuth Instagram (via Facebook OAuth pour Instagram Business)"""
-        logger.info("🚀 Démarrage OAuth Instagram")
+    def start_instagram_auth(self, user_id: int = None) -> Dict[str, str]:
+        """Démarrer le processus OAuth Instagram (via Facebook OAuth pour Instagram Business)
+        
+        Args:
+            user_id: ID de l'utilisateur actuellement connecté (pour lier le compte OAuth au User existant)
+        """
+        logger.info(f"🚀 Démarrage OAuth Instagram (user_id: {user_id})")
         if not settings.IG_APP_ID:
             logger.error("❌ IG_APP_ID non configuré")
             raise HTTPException(status_code=500, detail="IG_APP_ID non configuré dans Railway")
@@ -60,7 +64,19 @@ class OAuthService:
                        f"App ID actuel (premiers caractères): {app_id[:10]}..."
             )
         
-        state = str(int(time.time()))
+        # Encoder l'user_id dans le state si fourni (format: timestamp_userid)
+        import base64
+        import hashlib
+        timestamp = str(int(time.time()))
+        if user_id:
+            # Encoder l'user_id de manière sécurisée dans le state
+            state_data = f"{timestamp}_{user_id}"
+            # Hash simple pour éviter la manipulation (pas besoin de crypto fort ici, juste éviter la manipulation évidente)
+            state_hash = hashlib.sha256(f"{state_data}_{settings.OAUTH_STATE_SECRET}".encode()).hexdigest()[:8]
+            state = f"{timestamp}_{user_id}_{state_hash}"
+        else:
+            state = timestamp
+        
         # Scopes pour Instagram Business API (via Facebook)
         # Scopes valides: pages_show_list, pages_read_engagement, instagram_basic, pages_manage_posts (si besoin)
         # instagram_business_basic n'existe plus - utiliser instagram_basic à la place
@@ -216,26 +232,33 @@ class OAuthService:
                 # Mettre à jour le token
                 existing_oauth.access_token = long_token
             else:
-                # Chercher un User existant avec un email réel (pas instagram_xxx ou facebook_xxx)
-                # pour permettre la liaison de plusieurs OAuth accounts au même User
-                # Note: Instagram Business API passe par Facebook, donc on peut essayer de trouver via Facebook OAuth
-                user = None
-                
-                # Chercher via Facebook OAuth account si existe (Instagram Business passe par Facebook)
-                fb_oauth = db.query(OAuthAccount).filter(
-                    OAuthAccount.provider == "facebook"
-                ).first()
-                
-                if fb_oauth:
-                    user = db.query(User).filter(User.id == fb_oauth.user_id).first()
-                
-                # Si pas de User trouvé, créer un nouveau User
-                if not user:
-                    user = self.create_or_get_user(
-                        db, 
-                        email=f"instagram_{ig_user_id}@insidr.dev",
-                        name=f"Instagram User {ig_user_id}"
-                    )
+                # PRIORITÉ 1: Si user_id est passé dans le state, lier au User existant
+                if linked_user_id:
+                    user = db.query(User).filter(User.id == linked_user_id).first()
+                    if not user:
+                        logger.warning(f"⚠️ User ID {linked_user_id} non trouvé, création d'un nouveau User")
+                        user = self.create_or_get_user(
+                            db, 
+                            email=f"instagram_{ig_user_id}@insidr.dev",
+                            name=f"Instagram User {ig_user_id}"
+                        )
+                else:
+                    # PRIORITÉ 2: Chercher via Facebook OAuth account (Instagram Business passe par Facebook)
+                    user = None
+                    fb_oauth = db.query(OAuthAccount).filter(
+                        OAuthAccount.provider == "facebook"
+                    ).first()
+                    
+                    if fb_oauth:
+                        user = db.query(User).filter(User.id == fb_oauth.user_id).first()
+                    
+                    # PRIORITÉ 3: Si pas de User trouvé, créer un nouveau User
+                    if not user:
+                        user = self.create_or_get_user(
+                            db, 
+                            email=f"instagram_{ig_user_id}@insidr.dev",
+                            name=f"Instagram User {ig_user_id}"
+                        )
                 
                 # Créer l'OAuthAccount Instagram
                 oauth_account = OAuthAccount(
@@ -264,12 +287,24 @@ class OAuthService:
         
         raise HTTPException(status_code=400, detail="Erreur OAuth Instagram")
     
-    def start_facebook_auth(self) -> Dict[str, str]:
-        """Démarrer le processus OAuth Facebook"""
+    def start_facebook_auth(self, user_id: int = None) -> Dict[str, str]:
+        """Démarrer le processus OAuth Facebook
+        
+        Args:
+            user_id: ID de l'utilisateur actuellement connecté (pour lier le compte OAuth au User existant)
+        """
         if not settings.FB_APP_ID:
             raise HTTPException(status_code=500, detail="FB_APP_ID non configuré")
         
-        state = str(int(time.time()))
+        # Encoder l'user_id dans le state si fourni (format: timestamp_userid)
+        import hashlib
+        timestamp = str(int(time.time()))
+        if user_id:
+            state_data = f"{timestamp}_{user_id}"
+            state_hash = hashlib.sha256(f"{state_data}_{settings.OAUTH_STATE_SECRET}".encode()).hexdigest()[:8]
+            state = f"{timestamp}_{user_id}_{state_hash}"
+        else:
+            state = timestamp
         # Facebook Login for Business nécessite au moins une permission business
         # en plus de email/public_profile
         # pages_show_list est une permission légère qui permet de lister les Pages de l'utilisateur
@@ -293,7 +328,26 @@ class OAuthService:
         }
     
     async def handle_facebook_callback(self, code: str, state: str, db: Session) -> TokenResponse:
-        """Gérer le callback OAuth Facebook"""
+        """Gérer le callback OAuth Facebook
+        
+        Extrait l'user_id du state si présent pour lier le compte OAuth au User existant
+        """
+        # Décoder l'user_id depuis le state si présent
+        linked_user_id = None
+        import hashlib
+        try:
+            parts = state.split('_')
+            if len(parts) >= 3:
+                timestamp, user_id_str, state_hash = parts[0], parts[1], parts[2]
+                # Vérifier le hash pour éviter la manipulation
+                expected_hash = hashlib.sha256(f"{timestamp}_{user_id_str}_{settings.OAUTH_STATE_SECRET}".encode()).hexdigest()[:8]
+                if state_hash == expected_hash:
+                    linked_user_id = int(user_id_str)
+                    logger.info(f"📎 Liaison Facebook OAuth au User ID: {linked_user_id}")
+        except (ValueError, IndexError):
+            # State ne contient pas d'user_id, comportement normal
+            pass
+        
         if not settings.FB_APP_SECRET:
             raise HTTPException(status_code=500, detail="FB_APP_SECRET non configuré")
         
@@ -352,16 +406,22 @@ class OAuthService:
                     # Mettre à jour le token
                     existing_oauth.access_token = access_token
                 else:
-                    # Chercher un User existant avec un email réel (pas instagram_xxx ou facebook_xxx)
-                    # pour permettre la liaison de plusieurs OAuth accounts au même User
-                    user = None
-                    if email and not email.startswith(('instagram_', 'facebook_')):
-                        # Si on a un email réel, chercher un User existant avec cet email
-                        user = db.query(User).filter(User.email == email).first()
-                    
-                    # Si pas de User trouvé, créer un nouveau User
-                    if not user:
-                        user = self.create_or_get_user(db, email=email, name=name or f"Facebook User {fb_user_id}")
+                    # PRIORITÉ 1: Si user_id est passé dans le state, lier au User existant
+                    if linked_user_id:
+                        user = db.query(User).filter(User.id == linked_user_id).first()
+                        if not user:
+                            logger.warning(f"⚠️ User ID {linked_user_id} non trouvé, création d'un nouveau User")
+                            user = self.create_or_get_user(db, email=email, name=name or f"Facebook User {fb_user_id}")
+                    else:
+                        # PRIORITÉ 2: Chercher un User existant avec un email réel (pas instagram_xxx ou facebook_xxx)
+                        user = None
+                        if email and not email.startswith(('instagram_', 'facebook_')):
+                            # Si on a un email réel, chercher un User existant avec cet email
+                            user = db.query(User).filter(User.email == email).first()
+                        
+                        # PRIORITÉ 3: Si pas de User trouvé, créer un nouveau User
+                        if not user:
+                            user = self.create_or_get_user(db, email=email, name=name or f"Facebook User {fb_user_id}")
                     
                     # Créer l'OAuthAccount Facebook
                     oauth_account = OAuthAccount(

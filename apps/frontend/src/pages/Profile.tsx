@@ -86,7 +86,12 @@ export default function Profile() {
   };
 
   const handleConnect = (provider: string) => {
-    window.location.href = `${API_BASE}/api/v1/auth/${provider}/start`;
+    // Passer l'user_id actuel pour lier le nouveau compte OAuth au User existant
+    const userId = user?.id;
+    const url = userId 
+      ? `${API_BASE}/api/v1/auth/${provider}/start?user_id=${userId}`
+      : `${API_BASE}/api/v1/auth/${provider}/start`;
+    window.location.href = url;
   };
 
   const getProviderIcon = (provider: string) => {
