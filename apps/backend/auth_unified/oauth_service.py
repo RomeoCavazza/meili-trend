@@ -779,34 +779,52 @@ class OAuthService:
                 raise HTTPException(status_code=r2.status_code, detail=f"Erreur récupération info TikTok: {r2.text}")
             
             user_info = r2.json()
-            data = user_info.get("data", {}).get("user", {})
+            user_data = user_info.get("data", {}).get("user", {})
             
-            tiktok_user_id = data.get("open_id") or data.get("union_id")
-            display_name = data.get("display_name", "")
-            avatar_url = data.get("avatar_url")
+            tiktok_user_id = user_data.get("open_id") or user_data.get("union_id")
+            display_name = user_data.get("display_name", "")
+            avatar_url = user_data.get("avatar_url")
             
-            if tiktok_user_id:
-                # Créer un email à partir du TikTok user ID si pas d'email
-                email = f"tiktok_{tiktok_user_id}@veyl.io"
-                name = display_name or f"TikTok User {tiktok_user_id[:8]}"
-                
-                # Créer ou récupérer l'utilisateur
-                user = self.create_or_get_user(db, email=email, name=name)
-                if avatar_url:
-                    user.picture_url = avatar_url
-                    db.commit()
-                
-                # Sauvegarder le token OAuth TikTok
+            if not tiktok_user_id:
+                raise HTTPException(status_code=400, detail="Impossible de récupérer l'ID utilisateur TikTok")
+            
+            if access_token and tiktok_user_id:
+                # Vérifier si un OAuthAccount TikTok existe déjà pour cet utilisateur TikTok
                 from db.models import OAuthAccount
-                oauth_account = db.query(OAuthAccount).filter(
-                    OAuthAccount.user_id == user.id,
-                    OAuthAccount.provider == "tiktok"
+                existing_oauth = db.query(OAuthAccount).filter(
+                    OAuthAccount.provider == "tiktok",
+                    OAuthAccount.provider_user_id == str(tiktok_user_id)
                 ).first()
                 
-                if oauth_account:
-                    oauth_account.access_token = access_token
-                    oauth_account.refresh_token = refresh_token
+                # Si l'OAuth account existe, récupérer le User associé
+                if existing_oauth:
+                    user = db.query(User).filter(User.id == existing_oauth.user_id).first()
+                    # Mettre à jour les tokens
+                    existing_oauth.access_token = access_token
+                    if refresh_token:
+                        existing_oauth.refresh_token = refresh_token
+                    if avatar_url:
+                        user.picture_url = avatar_url
                 else:
+                    # PRIORITÉ 1: Si user_id est passé dans le state, lier au User existant
+                    if linked_user_id:
+                        user = db.query(User).filter(User.id == linked_user_id).first()
+                        if not user:
+                            logger.warning(f"⚠️ User ID {linked_user_id} non trouvé, création d'un nouveau User")
+                            email = f"tiktok_{tiktok_user_id}@veyl.io"
+                            name = display_name or f"TikTok User {tiktok_user_id[:8]}"
+                            user = self.create_or_get_user(db, email=email, name=name)
+                        if avatar_url:
+                            user.picture_url = avatar_url
+                    else:
+                        # PRIORITÉ 2: Créer un nouveau User
+                        email = f"tiktok_{tiktok_user_id}@veyl.io"
+                        name = display_name or f"TikTok User {tiktok_user_id[:8]}"
+                        user = self.create_or_get_user(db, email=email, name=name)
+                        if avatar_url:
+                            user.picture_url = avatar_url
+                    
+                    # Créer l'OAuthAccount TikTok
                     oauth_account = OAuthAccount(
                         user_id=user.id,
                         provider="tiktok",
