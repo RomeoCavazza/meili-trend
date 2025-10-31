@@ -271,7 +271,12 @@ class OAuthService:
             "prompt": "consent"
         }
         
-        auth_url = "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode(params)
+        # Construire l'URL manuellement pour éviter les problèmes d'encodage
+        from urllib.parse import quote
+        query_parts = []
+        for key, value in params.items():
+            query_parts.append(f"{key}={quote(str(value), safe='')}")
+        auth_url = "https://accounts.google.com/o/oauth2/v2/auth?" + "&".join(query_parts)
         
         return {
             "auth_url": auth_url,
