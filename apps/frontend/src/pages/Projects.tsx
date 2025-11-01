@@ -47,8 +47,8 @@ export default function Projects() {
         return;
       }
 
-      // Utiliser le proxy Vercel (chemin relatif)
-      const response = await fetch('/api/v1/projects', {
+      // Utiliser le proxy Vercel (chemin relatif avec slash final)
+      const response = await fetch('/api/v1/projects/', {
         mode: 'cors',
         credentials: 'same-origin',
         headers: {

@@ -203,7 +203,8 @@ export async function createProject(project: ProjectCreate): Promise<Project> {
   
   // TOUJOURS utiliser le chemin relatif (proxy Vite en dev, proxy Vercel en prod)
   // Le proxy Vercel évite les redirections 307 de Railway
-  const url = '/api/v1/projects';
+  // IMPORTANT: Ajouter slash final pour éviter redirection Railway (FastAPI redirige sans slash)
+  const url = '/api/v1/projects/';
   
   console.log('API: Creating project at:', url);
   console.log('API: Using proxy:', import.meta.env.DEV ? 'Vite' : 'Vercel');
