@@ -212,7 +212,7 @@ export async function createProject(project: ProjectCreate): Promise<Project> {
   const response = await fetch(url, {
     mode: 'cors',
     credentials: 'same-origin', // Utiliser same-origin pour le proxy Vercel
-    redirect: 'follow',
+    redirect: 'manual', // Ne pas suivre les redirections automatiquement (Vercel gère)
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -222,6 +222,32 @@ export async function createProject(project: ProjectCreate): Promise<Project> {
   });
   
   console.log('API: Response status:', response.status);
+  console.log('API: Response type:', response.type);
+  console.log('API: Response redirected:', response.redirected);
+  
+  // Si redirection, suivre manuellement via le proxy
+  if (response.type === 'opaqueredirect' || response.status === 0) {
+    // Redirection détectée - réessayer avec la nouvelle URL si fournie
+    const location = response.headers.get('Location');
+    if (location && location.startsWith('/')) {
+      // Redirection relative - suivre via le proxy
+      return fetch(location, {
+        mode: 'cors',
+        credentials: 'same-origin',
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token || ''}`,
+        },
+        body: JSON.stringify(project),
+      }).then(res => {
+        if (!res.ok) {
+          throw new Error(`HTTP ${res.status}: Failed to create project`);
+        }
+        return res.json();
+      });
+    }
+  }
   
   if (!response.ok) {
     const errorText = await response.text();
