@@ -270,7 +270,8 @@ export async function getProjects(): Promise<Project[]> {
   const token = localStorage.getItem('token');
   
   // TOUJOURS utiliser le chemin relatif (proxy Vite en dev, proxy Vercel en prod)
-  const url = '/api/v1/projects';
+  // IMPORTANT: Ajouter slash final pour éviter redirection Railway
+  const url = '/api/v1/projects/';
   
   const response = await fetch(url, {
     mode: 'cors',
