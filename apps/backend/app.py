@@ -37,30 +37,39 @@ app = FastAPI(
 # Configuration du rate limiting avec Redis
 setup_rate_limit(app)
 
-# Middleware pour détecter HTTPS via X-Forwarded-Proto et éviter les redirections
+# Middleware pour gérer les headers Railway et éviter les redirections 307
 @app.middleware("http")
-async def force_https_middleware(request, call_next):
+async def railway_proxy_middleware(request, call_next):
     """
-    Middleware pour détecter HTTPS via X-Forwarded-Proto (Vercel/Railway proxy).
-    Si X-Forwarded-Proto: https est présent, on considère la requête comme HTTPS.
+    Middleware pour gérer correctement les requêtes Railway.
+    
+    Railway gère HTTPS via son proxy, mais route les requêtes en HTTP vers le conteneur.
+    Ce middleware :
+    1. Détecte HTTPS via X-Forwarded-Proto (Railway l'ajoute automatiquement)
+    2. NE FORCE PAS de redirection HTTPS (Railway le gère déjà)
+    3. Ajoute les headers de sécurité appropriés
     """
-    # Vérifier X-Forwarded-Proto pour les requêtes via proxy (Vercel → Railway)
+    # Détecter HTTPS via X-Forwarded-Proto (Railway ajoute ce header automatiquement)
     forwarded_proto = request.headers.get("X-Forwarded-Proto", "").lower()
-    if forwarded_proto == "https":
-        # La requête vient d'un proxy HTTPS, on peut la traiter comme HTTPS
-        logger.debug(f"✅ Requête HTTPS détectée via proxy: {request.url.path}")
-    else:
-        # Logger le protocole pour debugging
-        scheme = request.url.scheme
-        if scheme == "http" and "localhost" not in str(request.url.hostname):
-            logger.warning(f"⚠️ Requête HTTP reçue (au lieu de HTTPS): {request.url}")
+    is_https_request = forwarded_proto == "https"
+    
+    # Logger pour debugging (seulement en cas de problème)
+    if forwarded_proto and forwarded_proto != "https" and forwarded_proto != "http":
+        logger.warning(f"⚠️ X-Forwarded-Proto inattendu: {forwarded_proto} pour {request.url.path}")
+    
+    # IMPORTANT: Ne pas forcer de redirection HTTPS car Railway le gère déjà
+    # Juste traiter la requête normalement
     
     response = await call_next(request)
     
-    # S'assurer que les headers CORS sont corrects
+    # Headers de sécurité
     response.headers["X-Content-Type-Options"] = "nosniff"
     response.headers["X-Frame-Options"] = "DENY"
     response.headers["X-XSS-Protection"] = "1; mode=block"
+    
+    # Si la requête venait de HTTPS (via Railway proxy), ajouter HSTS
+    if is_https_request:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
     
     return response
 

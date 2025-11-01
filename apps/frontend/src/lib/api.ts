@@ -225,7 +225,11 @@ export async function createProject(project: ProjectCreate): Promise<Project> {
   }
   
   // Construire l'URL : chemin relatif en dev (proxy), URL complète en prod
-  const url = apiBase ? `${apiBase}/api/v1/projects` : '/api/v1/projects';
+  // IMPORTANT: Pas de slash final pour éviter les redirections Railway
+  const url = apiBase 
+    ? `${apiBase.replace(/\/$/, '')}/api/v1/projects`
+    : '/api/v1/projects';
+  
   console.log('API: Creating project at:', url);
   console.log('API: API_BASE:', apiBase || '(using Vite proxy)');
   console.log('API: URL starts with https:', url.startsWith('https://'));
@@ -239,6 +243,7 @@ export async function createProject(project: ProjectCreate): Promise<Project> {
   const response = await fetch(url, {
     mode: 'cors',
     credentials: 'omit',
+    redirect: 'follow', // Suivre les redirections (mais ne devrait pas y en avoir)
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
