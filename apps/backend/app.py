@@ -36,7 +36,7 @@ app = FastAPI(
     # root_path est utilisé quand l'app est derrière un proxy (Railway, nginx, etc.)
     # Railway ajoute automatiquement les headers X-Forwarded-*
     root_path="",  # Laisser vide pour Railway (pas de sous-chemin)
-    redirect_slashes=True,  # Réactiver pour que /api/v1/projects/ fonctionne
+    redirect_slashes=False,  # Désactiver pour éviter les redirections 307
 )
 
 # Configuration du rate limiting avec Redis
