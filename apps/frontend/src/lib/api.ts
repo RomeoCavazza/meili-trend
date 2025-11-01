@@ -11,7 +11,7 @@ export const getApiBase = (): string => {
   // En production, utiliser le proxy Vercel pour éviter les problèmes CORS/mixed content
   // Le proxy Vercel (via vercel.json) redirige /api/* vers Railway
   // Cela évite les problèmes de mixed content car tout passe par le même domaine HTTPS
-  if (typeof window !== 'undefined' && window.location.hostname === 'veyl.io' || window.location.hostname === 'www.veyl.io') {
+  if (typeof window !== 'undefined' && (window.location.hostname === 'veyl.io' || window.location.hostname === 'www.veyl.io')) {
     return ''; // Utiliser le proxy Vercel en production aussi
   }
   
