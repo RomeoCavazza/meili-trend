@@ -37,6 +37,27 @@ app = FastAPI(
 # Configuration du rate limiting avec Redis
 setup_rate_limit(app)
 
+# Middleware pour forcer HTTPS et éviter les redirections HTTP → HTTPS
+@app.middleware("http")
+async def force_https_middleware(request, call_next):
+    """
+    Middleware pour détecter et logger les requêtes HTTP.
+    Railway devrait déjà gérer HTTPS, mais ce middleware aide au debugging.
+    """
+    # Logger le protocole pour debugging
+    scheme = request.url.scheme
+    if scheme == "http" and "localhost" not in str(request.url.hostname):
+        logger.warning(f"⚠️ Requête HTTP reçue (au lieu de HTTPS): {request.url}")
+    
+    response = await call_next(request)
+    
+    # S'assurer que les headers CORS sont corrects
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    
+    return response
+
 # CORS - SÉCURISÉ
 app.add_middleware(
     CORSMiddleware,
@@ -57,7 +78,9 @@ app.add_middleware(
         "Authorization", 
         "X-Requested-With",
         "Accept",
-        "Origin"
+        "Origin",
+        "X-Forwarded-Proto",  # Pour Railway/proxy
+        "X-Forwarded-For",    # Pour Railway/proxy
     ],
     expose_headers=["X-Total-Count"],
     max_age=3600,  # Cache preflight requests
