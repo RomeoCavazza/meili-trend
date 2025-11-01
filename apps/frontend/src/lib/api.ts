@@ -200,44 +200,19 @@ export interface Project {
 
 export async function createProject(project: ProjectCreate): Promise<Project> {
   const token = localStorage.getItem('token');
-  // Recalculer API_BASE à chaque fois pour éviter les problèmes de cache
-  let apiBase = getApiBase();
   
-  // En développement, apiBase est vide (proxy Vite)
-  // En production, apiBase doit être une URL HTTPS complète
-  if (apiBase && !import.meta.env.DEV) {
-    // FORCER HTTPS en production - remplacer HTTP par HTTPS
-    if (apiBase.startsWith('http://')) {
-      console.warn('⚠️ HTTP détecté, remplacement par HTTPS');
-      apiBase = apiBase.replace('http://', 'https://');
-    }
-    // S'assurer que ça commence par https://
-    if (!apiBase.startsWith('https://')) {
-      console.warn('⚠️ URL non-HTTPS, ajout du préfixe https://');
-      apiBase = `https://${apiBase}`;
-    }
-  }
-  
-  // Construire l'URL : chemin relatif en dev (proxy), URL complète en prod
-  // IMPORTANT: Pas de slash final pour éviter les redirections Railway
-  const url = apiBase 
-    ? `${apiBase.replace(/\/$/, '')}/api/v1/projects`
-    : '/api/v1/projects';
+  // TOUJOURS utiliser le chemin relatif (proxy Vite en dev, proxy Vercel en prod)
+  // Le proxy Vercel évite les redirections 307 de Railway
+  const url = '/api/v1/projects';
   
   console.log('API: Creating project at:', url);
-  console.log('API: API_BASE:', apiBase || '(using Vite proxy)');
-  console.log('API: URL starts with https:', url.startsWith('https://'));
+  console.log('API: Using proxy:', import.meta.env.DEV ? 'Vite' : 'Vercel');
   console.log('API: Request body:', JSON.stringify(project, null, 2));
-  
-  // Validation finale : en production, l'URL doit être HTTPS
-  if (!import.meta.env.DEV && !url.startsWith('https://') && !url.startsWith('/')) {
-    throw new Error(`URL invalide en production: ${url}. Doit être HTTPS ou chemin relatif.`);
-  }
   
   const response = await fetch(url, {
     mode: 'cors',
-    credentials: 'omit',
-    redirect: 'follow', // Suivre les redirections (mais ne devrait pas y en avoir)
+    credentials: 'same-origin', // Utiliser same-origin pour le proxy Vercel
+    redirect: 'follow',
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -267,20 +242,8 @@ export async function createProject(project: ProjectCreate): Promise<Project> {
 
 export async function getProjects(): Promise<Project[]> {
   const token = localStorage.getItem('token');
-  // Recalculer API_BASE à chaque fois
-  let apiBase = getApiBase();
   
-  // En production, forcer HTTPS
-  if (apiBase && !import.meta.env.DEV) {
-    if (apiBase.startsWith('http://')) {
-      apiBase = apiBase.replace('http://', 'https://');
-    }
-    if (!apiBase.startsWith('https://')) {
-      apiBase = `https://${apiBase}`;
-    }
-  }
-  
-  // Construire l'URL : toujours chemin relatif (proxy Vite en dev, proxy Vercel en prod)
+  // TOUJOURS utiliser le chemin relatif (proxy Vite en dev, proxy Vercel en prod)
   const url = '/api/v1/projects';
   
   const response = await fetch(url, {
