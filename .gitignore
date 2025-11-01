@@ -11,6 +11,7 @@ build/
 .vite/
 .vscode/
 .DS_Store
+*.tsbuildinfo
 
 # =====================================================
 # PYTHON / BACKEND
