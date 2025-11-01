@@ -37,17 +37,23 @@ app = FastAPI(
 # Configuration du rate limiting avec Redis
 setup_rate_limit(app)
 
-# Middleware pour forcer HTTPS et éviter les redirections HTTP → HTTPS
+# Middleware pour détecter HTTPS via X-Forwarded-Proto et éviter les redirections
 @app.middleware("http")
 async def force_https_middleware(request, call_next):
     """
-    Middleware pour détecter et logger les requêtes HTTP.
-    Railway devrait déjà gérer HTTPS, mais ce middleware aide au debugging.
+    Middleware pour détecter HTTPS via X-Forwarded-Proto (Vercel/Railway proxy).
+    Si X-Forwarded-Proto: https est présent, on considère la requête comme HTTPS.
     """
-    # Logger le protocole pour debugging
-    scheme = request.url.scheme
-    if scheme == "http" and "localhost" not in str(request.url.hostname):
-        logger.warning(f"⚠️ Requête HTTP reçue (au lieu de HTTPS): {request.url}")
+    # Vérifier X-Forwarded-Proto pour les requêtes via proxy (Vercel → Railway)
+    forwarded_proto = request.headers.get("X-Forwarded-Proto", "").lower()
+    if forwarded_proto == "https":
+        # La requête vient d'un proxy HTTPS, on peut la traiter comme HTTPS
+        logger.debug(f"✅ Requête HTTPS détectée via proxy: {request.url.path}")
+    else:
+        # Logger le protocole pour debugging
+        scheme = request.url.scheme
+        if scheme == "http" and "localhost" not in str(request.url.hostname):
+            logger.warning(f"⚠️ Requête HTTP reçue (au lieu de HTTPS): {request.url}")
     
     response = await call_next(request)
     

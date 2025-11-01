@@ -2,6 +2,17 @@
   "rewrites": [
     {
       "source": "/api/:path*",
+      "destination": "https://insidr-production.up.railway.app/api/:path*",
+      "has": [
+        {
+          "type": "header",
+          "key": "x-forwarded-proto",
+          "value": "https"
+        }
+      ]
+    },
+    {
+      "source": "/api/:path*",
       "destination": "https://insidr-production.up.railway.app/api/:path*"
     },
     {
@@ -23,7 +34,11 @@
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization, X-Requested-With"
+          "value": "Content-Type, Authorization, X-Requested-With, X-Forwarded-Proto"
+        },
+        {
+          "key": "X-Forwarded-Proto",
+          "value": "https"
         }
       ]
     }
