@@ -48,7 +48,6 @@ def serialize_project(project: Project, include_relations: bool = True) -> dict:
     
     return result
 
-@projects_router.get("", response_model=List[ProjectResponse])
 @projects_router.get("/", response_model=List[ProjectResponse])
 def list_projects(
     db: Session = Depends(get_db),
@@ -73,7 +72,6 @@ def get_project(
         raise HTTPException(status_code=404, detail="Project not found")
     return serialize_project(project)
 
-@projects_router.post("", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
 @projects_router.post("/", response_model=ProjectResponse, status_code=status.HTTP_201_CREATED)
 def create_project(
     project_in: ProjectCreate,
