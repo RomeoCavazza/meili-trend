@@ -471,9 +471,12 @@ class OAuthService:
                 else:
                     frontend_url = "http://localhost:8081/auth/callback"
                 # Encoder correctement tous les paramètres pour éviter les problèmes avec les caractères spéciaux
+                # Utiliser user.email et user.name (garanties d'exister après create_or_get_user)
+                user_email = user.email or email or f"facebook_{fb_user_id}@insidr.dev"
+                user_name = user.name or name or f"Facebook User {fb_user_id}"
                 encoded_token = quote(jwt_token, safe='')
-                encoded_email = quote(email or '', safe='')
-                encoded_name = quote(name or '', safe='')
+                encoded_email = quote(user_email, safe='')
+                encoded_name = quote(user_name, safe='')
                 redirect_url = f"{frontend_url}?token={encoded_token}&user_id={user.id}&email={encoded_email}&name={encoded_name}"
                 return RedirectResponse(url=redirect_url)
         
@@ -882,8 +885,20 @@ class OAuthService:
                 
                 # Rediriger vers le frontend avec le token
                 from fastapi.responses import RedirectResponse  # type: ignore
-                frontend_url = "https://veyl.io/auth/callback"
-                redirect_url = f"{frontend_url}?token={jwt_token}&user_id={user.id}&email={email}&name={name}"
+                from urllib.parse import quote
+                # Utiliser user.email et user.name (garanties d'exister après create_or_get_user)
+                user_email = user.email or f"tiktok_{tiktok_user_id}@veyl.io"
+                user_name = user.name or display_name or f"TikTok User {tiktok_user_id[:8]}"
+                # Déterminer l'URL frontend selon l'environnement
+                if os.getenv("ENVIRONMENT") == "production" or "veyl.io" in settings.TIKTOK_REDIRECT_URI:
+                    frontend_url = "https://veyl.io/auth/callback"
+                else:
+                    frontend_url = "http://localhost:8081/auth/callback"
+                # Encoder correctement tous les paramètres
+                encoded_token = quote(jwt_token, safe='')
+                encoded_email = quote(user_email, safe='')
+                encoded_name = quote(user_name, safe='')
+                redirect_url = f"{frontend_url}?token={encoded_token}&user_id={user.id}&email={encoded_email}&name={encoded_name}"
                 return RedirectResponse(url=redirect_url)
         
         raise HTTPException(status_code=400, detail="Erreur OAuth TikTok")
