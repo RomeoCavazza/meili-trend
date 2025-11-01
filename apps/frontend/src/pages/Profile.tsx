@@ -44,7 +44,8 @@ export default function Profile() {
     try {
       const token = localStorage.getItem('token');
       const apiBase = getApiBase();
-      const response = await fetch(`${apiBase}/api/v1/auth/accounts/connected`, {
+      const url = apiBase ? `${apiBase}/api/v1/auth/accounts/connected` : '/api/v1/auth/accounts/connected';
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -69,7 +70,8 @@ export default function Profile() {
     try {
       const token = localStorage.getItem('token');
       const apiBase = getApiBase();
-      const response = await fetch(`${apiBase}/api/v1/auth/accounts/${accountId}`, {
+      const url = apiBase ? `${apiBase}/api/v1/auth/accounts/${accountId}` : `/api/v1/auth/accounts/${accountId}`;
+      const response = await fetch(url, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -91,9 +93,10 @@ export default function Profile() {
     // Passer l'user_id actuel pour lier le nouveau compte OAuth au User existant
     const userId = user?.id;
     const apiBase = getApiBase();
+    const basePath = apiBase || '';
     const url = userId 
-      ? `${apiBase}/api/v1/auth/${provider}/start?user_id=${userId}`
-      : `${apiBase}/api/v1/auth/${provider}/start`;
+      ? `${basePath}/api/v1/auth/${provider}/start?user_id=${userId}`
+      : `${basePath}/api/v1/auth/${provider}/start`;
     window.location.href = url;
   };
 

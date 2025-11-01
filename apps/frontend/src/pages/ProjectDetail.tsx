@@ -10,17 +10,8 @@ import { Hash, User, Plus, X, Heart, MessageCircle, Eye, ArrowLeft, Settings } f
 import { getFakeProject, getFakeProjectPosts, fakeCreators, fakePosts } from '@/lib/fakeData';
 import { useToast } from '@/hooks/use-toast';
 
-// Force HTTPS pour éviter mixed content
-const getApiBase = () => {
-  const envUrl = import.meta.env.VITE_API_URL;
-  if (envUrl) {
-    return envUrl.startsWith('http://') && !import.meta.env.DEV 
-      ? envUrl.replace('http://', 'https://') 
-      : envUrl;
-  }
-  return import.meta.env.DEV ? '' : 'https://insidr-production.up.railway.app';
-};
-const API_BASE = getApiBase();
+// Importer getApiBase depuis api.ts
+import { getApiBase } from '@/lib/api';
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
@@ -44,7 +35,9 @@ export default function ProjectDetail() {
         }
 
         // Charger projet depuis API
-        const response = await fetch(`${API_BASE}/api/v1/projects/${id}`, {
+        const apiBase = getApiBase();
+        const url = apiBase ? `${apiBase}/api/v1/projects/${id}` : `/api/v1/projects/${id}`;
+        const response = await fetch(url, {
           headers: {
             'Authorization': `Bearer ${token}`
           }

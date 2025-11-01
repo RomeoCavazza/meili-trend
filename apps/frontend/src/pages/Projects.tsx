@@ -48,7 +48,8 @@ export default function Projects() {
       }
 
       const apiBase = getApiBase();
-      const response = await fetch(`${apiBase}/api/v1/projects`, {
+      const url = apiBase ? `${apiBase}/api/v1/projects` : '/api/v1/projects';
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -166,7 +167,8 @@ export default function Projects() {
                               try {
                                 const token = localStorage.getItem('token');
                                 const apiBase = getApiBase();
-                                const response = await fetch(`${apiBase}/api/v1/projects/${project.id}`, {
+                                const url = apiBase ? `${apiBase}/api/v1/projects/${project.id}` : `/api/v1/projects/${project.id}`;
+                                const response = await fetch(url, {
                                   method: 'DELETE',
                                   headers: {
                                     'Authorization': `Bearer ${token}`
