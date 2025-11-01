@@ -9,7 +9,7 @@ from db.models import Project, User, ProjectHashtag, ProjectCreator, Hashtag, Pl
 from auth_unified.auth_endpoints import get_current_user
 from projects.schemas import ProjectCreate, ProjectUpdate, ProjectResponse
 
-projects_router = APIRouter(prefix="/api/v1/projects", tags=["projects"])
+projects_router = APIRouter(prefix="/api/v1/projects", tags=["projects"], redirect_slashes=False)
 
 def serialize_project(project: Project, include_relations: bool = True) -> dict:
     """Sérialise un projet pour la réponse API"""
