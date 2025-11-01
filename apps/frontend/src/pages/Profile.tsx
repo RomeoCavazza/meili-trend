@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Globe, Instagram, Facebook, LogOut } from 'lucide-react';
 import { toast } from 'sonner';
 import { TikTokIcon } from '@/components/icons/TikTokIcon';
+import { getApiBase } from '@/lib/api';
 
 interface ConnectedAccount {
   id: number;
@@ -24,18 +25,6 @@ export default function Profile() {
   const navigate = useNavigate();
   const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Force HTTPS pour éviter mixed content
-  const getApiBase = () => {
-    const envUrl = import.meta.env.VITE_API_URL;
-    if (envUrl) {
-      return envUrl.startsWith('http://') && !import.meta.env.DEV 
-        ? envUrl.replace('http://', 'https://') 
-        : envUrl;
-    }
-    return import.meta.env.DEV ? '' : 'https://insidr-production.up.railway.app';
-  };
-  const API_BASE = getApiBase();
 
   useEffect(() => {
     fetchConnectedAccounts();
@@ -54,7 +43,8 @@ export default function Profile() {
   const fetchConnectedAccounts = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/v1/auth/accounts/connected`, {
+      const apiBase = getApiBase();
+      const response = await fetch(`${apiBase}/api/v1/auth/accounts/connected`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -78,7 +68,8 @@ export default function Profile() {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`${API_BASE}/api/v1/auth/accounts/${accountId}`, {
+      const apiBase = getApiBase();
+      const response = await fetch(`${apiBase}/api/v1/auth/accounts/${accountId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -99,9 +90,10 @@ export default function Profile() {
   const handleConnect = (provider: string) => {
     // Passer l'user_id actuel pour lier le nouveau compte OAuth au User existant
     const userId = user?.id;
+    const apiBase = getApiBase();
     const url = userId 
-      ? `${API_BASE}/api/v1/auth/${provider}/start?user_id=${userId}`
-      : `${API_BASE}/api/v1/auth/${provider}/start`;
+      ? `${apiBase}/api/v1/auth/${provider}/start?user_id=${userId}`
+      : `${apiBase}/api/v1/auth/${provider}/start`;
     window.location.href = url;
   };
 

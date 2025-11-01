@@ -2,19 +2,32 @@
 // En dev : utiliser le proxy Vite (vite.config.ts) qui redirige vers Railway
 // En prod : utiliser VITE_API_URL si défini, sinon Railway
 // Force HTTPS pour éviter les erreurs mixed content
-const getApiBase = () => {
+export const getApiBase = (): string => {
+  // En développement, utiliser le proxy Vite
+  if (import.meta.env.DEV) {
+    return ''; // Proxy Vite redirige vers Railway
+  }
+  
+  // En production, toujours forcer HTTPS
   const envUrl = import.meta.env.VITE_API_URL;
   if (envUrl) {
-    // S'assurer que l'URL utilise HTTPS en production
-    return envUrl.startsWith('http://') && !import.meta.env.DEV 
+    // Remplacer HTTP par HTTPS en production
+    const url = envUrl.startsWith('http://') 
       ? envUrl.replace('http://', 'https://') 
       : envUrl;
+    // S'assurer que ça commence bien par https://
+    return url.startsWith('https://') ? url : `https://${url}`;
   }
-  return import.meta.env.DEV 
-    ? '' // Utilise le proxy Vite en dev
-    : 'https://insidr-production.up.railway.app';
+  
+  // URL par défaut en HTTPS
+  return 'https://insidr-production.up.railway.app';
 };
 
+// Calculer API_BASE à chaque fois pour éviter les problèmes de cache
+// Ne pas utiliser une constante, mais une fonction qui recalcule à chaque appel
+export const getApiBaseUrl = () => getApiBase();
+
+// Pour compatibilité avec le code existant
 const API_BASE = getApiBase();
 
 // Debug: log API_BASE pour vérifier la configuration
@@ -69,7 +82,8 @@ export async function searchPosts(params: SearchParams): Promise<SearchResponse>
     }
   });
 
-  const url = `${API_BASE}/api/v1/posts/search?${searchParams.toString()}`;
+  const apiBase = getApiBase();
+  const url = `${apiBase}/api/v1/posts/search?${searchParams.toString()}`;
   
   const response = await fetch(url, {
     headers: {
@@ -88,7 +102,8 @@ export async function searchPosts(params: SearchParams): Promise<SearchResponse>
 }
 
 export async function searchHashtags(q: string, platform: string = 'instagram'): Promise<any[]> {
-  const response = await fetch(`${API_BASE}/v1/search/hashtags?q=${q}&platform=${platform}`, {
+  const apiBase = getApiBase();
+  const response = await fetch(`${apiBase}/v1/search/hashtags?q=${q}&platform=${platform}`, {
     headers: {
       'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
     }
@@ -102,13 +117,15 @@ export async function searchHashtags(q: string, platform: string = 'instagram'):
 }
 
 export async function checkHealth(): Promise<{ status: string }> {
-  const response = await fetch(`${API_BASE}/healthz`);
+  const apiBase = getApiBase();
+  const response = await fetch(`${apiBase}/healthz`);
   return response.json();
 }
 
 // Nouvelles fonctions d'authentification
 export async function login(email: string, password: string) {
-  const response = await fetch(`${API_BASE}/api/v1/auth/login`, {
+  const apiBase = getApiBase();
+  const response = await fetch(`${apiBase}/api/v1/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password })
@@ -122,7 +139,8 @@ export async function login(email: string, password: string) {
 }
 
 export async function register(email: string, password: string, name?: string) {
-  const response = await fetch(`${API_BASE}/api/v1/auth/register`, {
+  const apiBase = getApiBase();
+  const response = await fetch(`${apiBase}/api/v1/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password, name })
@@ -136,7 +154,8 @@ export async function register(email: string, password: string, name?: string) {
 }
 
 export async function getMe(token: string) {
-  const response = await fetch(`${API_BASE}/api/v1/auth/me`, {
+  const apiBase = getApiBase();
+  const response = await fetch(`${apiBase}/api/v1/auth/me`, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
   
@@ -180,10 +199,18 @@ export interface Project {
 
 export async function createProject(project: ProjectCreate): Promise<Project> {
   const token = localStorage.getItem('token');
-  const url = `${API_BASE}/api/v1/projects`;
+  // Recalculer API_BASE à chaque fois pour éviter les problèmes de cache
+  const apiBase = getApiBase();
+  const url = `${apiBase}/api/v1/projects`;
   console.log('API: Creating project at:', url);
-  console.log('API: API_BASE:', API_BASE);
+  console.log('API: API_BASE:', apiBase);
   console.log('API: Request body:', JSON.stringify(project, null, 2));
+  
+  // S'assurer que l'URL est en HTTPS
+  if (!url.startsWith('https://') && !import.meta.env.DEV) {
+    console.error('❌ URL non-HTTPS détectée:', url);
+    throw new Error('API URL must use HTTPS in production');
+  }
   
   const response = await fetch(url, {
     method: 'POST',
@@ -215,7 +242,17 @@ export async function createProject(project: ProjectCreate): Promise<Project> {
 
 export async function getProjects(): Promise<Project[]> {
   const token = localStorage.getItem('token');
-  const response = await fetch(`${API_BASE}/api/v1/projects`, {
+  // Recalculer API_BASE à chaque fois
+  const apiBase = getApiBase();
+  const url = `${apiBase}/api/v1/projects`;
+  
+  // S'assurer que l'URL est en HTTPS
+  if (!url.startsWith('https://') && !import.meta.env.DEV) {
+    console.error('❌ URL non-HTTPS détectée:', url);
+    throw new Error('API URL must use HTTPS in production');
+  }
+  
+  const response = await fetch(url, {
     headers: {
       'Authorization': `Bearer ${token || ''}`,
     },

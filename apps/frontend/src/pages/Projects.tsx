@@ -9,17 +9,8 @@ import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 
-// Force HTTPS pour éviter mixed content
-const getApiBase = () => {
-  const envUrl = import.meta.env.VITE_API_URL;
-  if (envUrl) {
-    return envUrl.startsWith('http://') && !import.meta.env.DEV 
-      ? envUrl.replace('http://', 'https://') 
-      : envUrl;
-  }
-  return import.meta.env.DEV ? '' : 'https://insidr-production.up.railway.app';
-};
-const API_BASE = getApiBase();
+// Importer getApiBase depuis api.ts pour éviter la duplication
+import { getApiBase } from '@/lib/api';
 
 interface Project {
   id: string;
@@ -56,7 +47,8 @@ export default function Projects() {
         return;
       }
 
-      const response = await fetch(`${API_BASE}/api/v1/projects`, {
+      const apiBase = getApiBase();
+      const response = await fetch(`${apiBase}/api/v1/projects`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -173,7 +165,8 @@ export default function Projects() {
                             if (confirm(`Voulez-vous supprimer le projet "${project.name}" ?`)) {
                               try {
                                 const token = localStorage.getItem('token');
-                                const response = await fetch(`${API_BASE}/api/v1/projects/${project.id}`, {
+                                const apiBase = getApiBase();
+                                const response = await fetch(`${apiBase}/api/v1/projects/${project.id}`, {
                                   method: 'DELETE',
                                   headers: {
                                     'Authorization': `Bearer ${token}`
