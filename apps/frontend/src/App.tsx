@@ -47,13 +47,13 @@ const App = () => (
               <Route path="/projects/:id/creator/:username" element={<ProtectedRoute><CreatorDetail /></ProtectedRoute>} />
               <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetail /></ProtectedRoute>} />
               {/* Other Routes */}
-              <Route path="/dashboard" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-              <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
-              <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-              <Route path="/watch" element={<ProtectedRoute><Watch /></ProtectedRoute>} />
-              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+                    <Route path="/dashboard" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+                    <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
+                    <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+                    <Route path="/watch" element={<ProtectedRoute><Watch /></ProtectedRoute>} />
+                    <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
               <Route path="/community" element={<ProtectedRoute><Community /></ProtectedRoute>} />
-              <Route path="/explore" element={<Search />} />
+                    <Route path="/explore" element={<Search />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/data-deletion" element={<DataDeletion />} />
