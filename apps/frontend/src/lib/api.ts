@@ -253,7 +253,7 @@ export async function getProjects(): Promise<Project[]> {
   
   const response = await fetch(url, {
     mode: 'cors',
-    credentials: 'same-origin', // Utiliser same-origin pour le proxy Vercel
+    credentials: apiBase ? 'include' : 'same-origin', // include pour Railway direct, same-origin pour proxy
     headers: {
       'Authorization': `Bearer ${token || ''}`,
     },

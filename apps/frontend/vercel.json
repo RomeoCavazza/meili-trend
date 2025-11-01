@@ -2,11 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://insidr-production.up.railway.app/api/:path*",
-      "headers": {
-        "X-Forwarded-Proto": "https",
-        "X-Forwarded-For": "$remote_addr"
-      }
+      "destination": "https://insidr-production.up.railway.app/api/:path*"
     },
     {
       "source": "/(.*)",
