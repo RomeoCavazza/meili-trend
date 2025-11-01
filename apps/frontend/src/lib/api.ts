@@ -8,17 +8,12 @@ export const getApiBase = (): string => {
     return ''; // Proxy Vite redirige vers Railway
   }
   
-  // En production, utiliser le proxy Vercel pour éviter les problèmes CORS/mixed content
-  // Le proxy Vercel (via vercel.json) redirige /api/* vers Railway
-  // Cela évite les problèmes de mixed content car tout passe par le même domaine HTTPS
-  if (typeof window !== 'undefined' && (window.location.hostname === 'veyl.io' || window.location.hostname === 'www.veyl.io')) {
-    return ''; // Utiliser le proxy Vercel en production aussi
-  }
-  
-  // Fallback: URL directe Railway en HTTPS
+  // En production, appeler directement Railway en HTTPS
+  // Le proxy Vercel causait des problèmes (Railway redirige HTTP → HTTPS en 307)
+  // Appel direct HTTPS évite les redirections et fonctionne correctement avec CORS
   const envUrl = import.meta.env.VITE_API_URL;
   if (envUrl) {
-    // Remplacer HTTP par HTTPS en production
+    // FORCER HTTPS - remplacer HTTP par HTTPS
     const url = envUrl.startsWith('http://') 
       ? envUrl.replace('http://', 'https://') 
       : envUrl;
@@ -26,7 +21,7 @@ export const getApiBase = (): string => {
     return url.startsWith('https://') ? url : `https://${url}`;
   }
   
-  // URL par défaut en HTTPS
+  // URL par défaut en HTTPS (Railway)
   return 'https://insidr-production.up.railway.app';
 };
 
@@ -214,33 +209,36 @@ export async function createProject(project: ProjectCreate): Promise<Project> {
   // Recalculer API_BASE à chaque fois pour éviter les problèmes de cache
   let apiBase = getApiBase();
   
-  // Si apiBase est vide (proxy relatif), ne pas ajouter https://
-  // Sinon, forcer HTTPS en production
-  if (apiBase) {
-    if (!import.meta.env.DEV) {
-      // Remplacer HTTP par HTTPS si jamais détecté
-      if (apiBase.startsWith('http://')) {
-        console.warn('⚠️ HTTP détecté, remplacement par HTTPS');
-        apiBase = apiBase.replace('http://', 'https://');
-      }
-      // S'assurer que ça commence par https:// (seulement si apiBase n'est pas vide)
-      if (apiBase && !apiBase.startsWith('https://') && !apiBase.startsWith('http://')) {
-        console.warn('⚠️ URL non-HTTPS, ajout du préfixe https://');
-        apiBase = `https://${apiBase}`;
-      }
+  // En développement, apiBase est vide (proxy Vite)
+  // En production, apiBase doit être une URL HTTPS complète
+  if (apiBase && !import.meta.env.DEV) {
+    // FORCER HTTPS en production - remplacer HTTP par HTTPS
+    if (apiBase.startsWith('http://')) {
+      console.warn('⚠️ HTTP détecté, remplacement par HTTPS');
+      apiBase = apiBase.replace('http://', 'https://');
+    }
+    // S'assurer que ça commence par https://
+    if (!apiBase.startsWith('https://')) {
+      console.warn('⚠️ URL non-HTTPS, ajout du préfixe https://');
+      apiBase = `https://${apiBase}`;
     }
   }
   
-  // Construire l'URL correctement : si apiBase est vide, utiliser un chemin relatif
+  // Construire l'URL : chemin relatif en dev (proxy), URL complète en prod
   const url = apiBase ? `${apiBase}/api/v1/projects` : '/api/v1/projects';
   console.log('API: Creating project at:', url);
-  console.log('API: API_BASE:', apiBase || '(using relative proxy)');
-  console.log('API: URL:', url);
+  console.log('API: API_BASE:', apiBase || '(using Vite proxy)');
+  console.log('API: URL starts with https:', url.startsWith('https://'));
   console.log('API: Request body:', JSON.stringify(project, null, 2));
   
+  // Validation finale : en production, l'URL doit être HTTPS
+  if (!import.meta.env.DEV && !url.startsWith('https://') && !url.startsWith('/')) {
+    throw new Error(`URL invalide en production: ${url}. Doit être HTTPS ou chemin relatif.`);
+  }
+  
   const response = await fetch(url, {
-    mode: 'cors', // Explicitement demander CORS
-    credentials: 'omit', // Ne pas envoyer de cookies pour éviter les problèmes
+    mode: 'cors',
+    credentials: 'omit',
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -273,18 +271,17 @@ export async function getProjects(): Promise<Project[]> {
   // Recalculer API_BASE à chaque fois
   let apiBase = getApiBase();
   
-  // Si apiBase est vide (proxy relatif), ne pas modifier
-  // Sinon, forcer HTTPS en production
+  // En production, forcer HTTPS
   if (apiBase && !import.meta.env.DEV) {
     if (apiBase.startsWith('http://')) {
       apiBase = apiBase.replace('http://', 'https://');
     }
-    if (!apiBase.startsWith('https://') && !apiBase.startsWith('http://')) {
+    if (!apiBase.startsWith('https://')) {
       apiBase = `https://${apiBase}`;
     }
   }
   
-  // Construire l'URL correctement : si apiBase est vide, utiliser un chemin relatif
+  // Construire l'URL : chemin relatif en dev (proxy), URL complète en prod
   const url = apiBase ? `${apiBase}/api/v1/projects` : '/api/v1/projects';
   
   const response = await fetch(url, {
