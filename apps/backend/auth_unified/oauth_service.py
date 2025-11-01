@@ -27,6 +27,74 @@ class OAuthService:
             db.refresh(user)
         return user
     
+    def find_or_create_user_for_oauth(
+        self,
+        db: Session,
+        provider: str,
+        provider_user_id: str,
+        email: str = None,
+        name: str = None,
+        linked_user_id: int = None
+    ) -> User:
+        """
+        Fonction centralisée pour trouver ou créer un User lors d'une connexion OAuth.
+        
+        PRIORITÉ 1: Si linked_user_id est fourni, utiliser ce User
+        PRIORITÉ 2: Chercher si un OAuthAccount du même provider existe déjà
+        PRIORITÉ 3: Si email réel fourni, chercher un User existant avec cet email
+        PRIORITÉ 4: Chercher via d'autres OAuthAccounts existants (cross-linking)
+        PRIORITÉ 5: Créer un nouveau User uniquement en dernier recours
+        
+        Retourne: User existant ou nouvellement créé
+        """
+        from db.models import OAuthAccount
+        
+        # PRIORITÉ 1: User lié explicitement (utilisateur déjà connecté qui ajoute un réseau)
+        if linked_user_id:
+            user = db.query(User).filter(User.id == linked_user_id).first()
+            if user:
+                logger.info(f"📎 Liaison OAuth {provider} au User ID: {linked_user_id}")
+                return user
+            logger.warning(f"⚠️ User ID {linked_user_id} non trouvé, poursuite de la recherche...")
+        
+        # PRIORITÉ 2: Chercher si un OAuthAccount du même provider existe déjà
+        existing_oauth = db.query(OAuthAccount).filter(
+            OAuthAccount.provider == provider,
+            OAuthAccount.provider_user_id == str(provider_user_id)
+        ).first()
+        
+        if existing_oauth:
+            user = db.query(User).filter(User.id == existing_oauth.user_id).first()
+            if user:
+                logger.info(f"🔗 OAuthAccount {provider} existe déjà pour User ID: {user.id}")
+                return user
+        
+        # PRIORITÉ 3: Si email réel fourni, chercher un User existant avec cet email
+        if email and not email.startswith(('instagram_', 'facebook_', 'tiktok_', 'google_')):
+            user = db.query(User).filter(User.email == email).first()
+            if user:
+                logger.info(f"📧 User trouvé via email réel: {email} (User ID: {user.id})")
+                return user
+        
+        # PRIORITÉ 4: Chercher via d'autres OAuthAccounts existants (cross-linking)
+        # Si l'utilisateur a déjà un compte (ex: Google), et qu'il se connecte avec Instagram,
+        # on cherche tous les OAuthAccounts et on lie au même User s'il existe
+        # Note: Cette logique est risquée car on ne peut pas être sûr que deux OAuthAccounts
+        # appartiennent au même utilisateur réel. On évite donc cette approche pour l'instant.
+        # À la place, on compte sur linked_user_id passé depuis le frontend.
+        
+        # PRIORITÉ 5: Créer un nouveau User (dernier recours)
+        # Générer un email si nécessaire
+        if not email:
+            email = f"{provider}_{provider_user_id}@veyl.io"
+        
+        if not name:
+            name = f"{provider.capitalize()} User {provider_user_id[:8]}"
+        
+        logger.info(f"🆕 Création d'un nouveau User pour OAuth {provider}")
+        user = self.create_or_get_user(db, email=email, name=name)
+        return user
+    
     def start_instagram_auth(self, user_id: int = None) -> Dict[str, str]:
         """Démarrer le processus OAuth Instagram (via Facebook OAuth pour Instagram Business)
         
@@ -238,47 +306,29 @@ class OAuthService:
                     break
 
         if long_token and ig_user_id:
-            # Vérifier si un OAuthAccount Instagram existe déjà pour cet utilisateur Instagram
             from db.models import OAuthAccount
+            
+            # Utiliser la fonction centralisée pour trouver ou créer le User
+            user = self.find_or_create_user_for_oauth(
+                db=db,
+                provider="instagram",
+                provider_user_id=str(ig_user_id),
+                email=f"instagram_{ig_user_id}@veyl.io",
+                name=f"Instagram User {ig_user_id}",
+                linked_user_id=linked_user_id
+            )
+            
+            # Vérifier si l'OAuthAccount Instagram existe déjà pour ce User
             existing_oauth = db.query(OAuthAccount).filter(
+                OAuthAccount.user_id == user.id,
                 OAuthAccount.provider == "instagram",
                 OAuthAccount.provider_user_id == str(ig_user_id)
             ).first()
             
-            # Si l'OAuth account existe, récupérer le User associé
             if existing_oauth:
-                user = db.query(User).filter(User.id == existing_oauth.user_id).first()
                 # Mettre à jour le token
                 existing_oauth.access_token = long_token
             else:
-                # PRIORITÉ 1: Si user_id est passé dans le state, lier au User existant
-                if linked_user_id:
-                    user = db.query(User).filter(User.id == linked_user_id).first()
-                    if not user:
-                        logger.warning(f"⚠️ User ID {linked_user_id} non trouvé, création d'un nouveau User")
-                        user = self.create_or_get_user(
-                            db, 
-                            email=f"instagram_{ig_user_id}@insidr.dev",
-                            name=f"Instagram User {ig_user_id}"
-                        )
-                else:
-                    # PRIORITÉ 2: Chercher via Facebook OAuth account (Instagram Business passe par Facebook)
-                    user = None
-                    fb_oauth = db.query(OAuthAccount).filter(
-                        OAuthAccount.provider == "facebook"
-                    ).first()
-                    
-                    if fb_oauth:
-                        user = db.query(User).filter(User.id == fb_oauth.user_id).first()
-                    
-                    # PRIORITÉ 3: Si pas de User trouvé, créer un nouveau User
-                    if not user:
-                        user = self.create_or_get_user(
-                            db, 
-                            email=f"instagram_{ig_user_id}@insidr.dev",
-                            name=f"Instagram User {ig_user_id}"
-                        )
-                
                 # Créer l'OAuthAccount Instagram
                 oauth_account = OAuthAccount(
                     user_id=user.id,
@@ -417,36 +467,29 @@ class OAuthService:
                 email = f"facebook_{fb_user_id}@insidr.dev"
             
             if access_token and fb_user_id:
-                # Vérifier si un OAuthAccount Facebook existe déjà pour cet utilisateur Facebook
                 from db.models import OAuthAccount
+                
+                # Utiliser la fonction centralisée pour trouver ou créer le User
+                user = self.find_or_create_user_for_oauth(
+                    db=db,
+                    provider="facebook",
+                    provider_user_id=str(fb_user_id),
+                    email=email,  # Peut être None, la fonction gère
+                    name=name or f"Facebook User {fb_user_id}",
+                    linked_user_id=linked_user_id
+                )
+                
+                # Vérifier si l'OAuthAccount Facebook existe déjà pour ce User
                 existing_oauth = db.query(OAuthAccount).filter(
+                    OAuthAccount.user_id == user.id,
                     OAuthAccount.provider == "facebook",
                     OAuthAccount.provider_user_id == str(fb_user_id)
                 ).first()
                 
-                # Si l'OAuth account existe, récupérer le User associé
                 if existing_oauth:
-                    user = db.query(User).filter(User.id == existing_oauth.user_id).first()
                     # Mettre à jour le token
                     existing_oauth.access_token = access_token
                 else:
-                    # PRIORITÉ 1: Si user_id est passé dans le state, lier au User existant
-                    if linked_user_id:
-                        user = db.query(User).filter(User.id == linked_user_id).first()
-                        if not user:
-                            logger.warning(f"⚠️ User ID {linked_user_id} non trouvé, création d'un nouveau User")
-                            user = self.create_or_get_user(db, email=email, name=name or f"Facebook User {fb_user_id}")
-                    else:
-                        # PRIORITÉ 2: Chercher un User existant avec un email réel (pas instagram_xxx ou facebook_xxx)
-                        user = None
-                        if email and not email.startswith(('instagram_', 'facebook_')):
-                            # Si on a un email réel, chercher un User existant avec cet email
-                            user = db.query(User).filter(User.email == email).first()
-                        
-                        # PRIORITÉ 3: Si pas de User trouvé, créer un nouveau User
-                        if not user:
-                            user = self.create_or_get_user(db, email=email, name=name or f"Facebook User {fb_user_id}")
-                    
                     # Créer l'OAuthAccount Facebook
                     oauth_account = OAuthAccount(
                         user_id=user.id,
@@ -616,20 +659,44 @@ class OAuthService:
                 raise HTTPException(status_code=400, detail="Impossible de récupérer l'email Google")
             
             try:
-                # Créer ou récupérer l'utilisateur
-                user = self.create_or_get_user(db, email=email, name=name or email.split("@")[0])
-                
-                # Sauvegarder le token Google dans OAuthAccount (pour cohérence, même si pas utilisé pour API)
                 from db.models import OAuthAccount
+                
+                # Décoder linked_user_id depuis le state si présent (pour Google aussi)
+                linked_user_id = None
+                import hashlib
+                try:
+                    parts = state.split('_')
+                    if len(parts) >= 3:
+                        timestamp, user_id_str, state_hash = parts[0], parts[1], parts[2]
+                        expected_hash = hashlib.sha256(f"{timestamp}_{user_id_str}_{settings.OAUTH_STATE_SECRET}".encode()).hexdigest()[:8]
+                        if state_hash == expected_hash:
+                            linked_user_id = int(user_id_str)
+                            logger.info(f"📎 Liaison Google OAuth au User ID: {linked_user_id}")
+                except (ValueError, IndexError):
+                    pass
+                
+                # Utiliser la fonction centralisée pour trouver ou créer le User
+                user = self.find_or_create_user_for_oauth(
+                    db=db,
+                    provider="google",
+                    provider_user_id=str(google_user_id),
+                    email=email,
+                    name=name or email.split("@")[0],
+                    linked_user_id=linked_user_id
+                )
+                
+                # Vérifier si l'OAuthAccount Google existe déjà pour ce User
                 oauth_account = db.query(OAuthAccount).filter(
                     OAuthAccount.user_id == user.id,
-                    OAuthAccount.provider == "google"
+                    OAuthAccount.provider == "google",
+                    OAuthAccount.provider_user_id == str(google_user_id)
                 ).first()
                 
                 if oauth_account:
+                    # Mettre à jour le token
                     oauth_account.access_token = access_token
-                    oauth_account.provider_user_id = str(google_user_id)
                 else:
+                    # Créer l'OAuthAccount Google
                     oauth_account = OAuthAccount(
                         user_id=user.id,
                         provider="google",
@@ -833,41 +900,35 @@ class OAuthService:
                 raise HTTPException(status_code=400, detail="Impossible de récupérer l'ID utilisateur TikTok")
             
             if access_token and tiktok_user_id:
-                # Vérifier si un OAuthAccount TikTok existe déjà pour cet utilisateur TikTok
                 from db.models import OAuthAccount
+                
+                # Utiliser la fonction centralisée pour trouver ou créer le User
+                user = self.find_or_create_user_for_oauth(
+                    db=db,
+                    provider="tiktok",
+                    provider_user_id=str(tiktok_user_id),
+                    email=f"tiktok_{tiktok_user_id}@veyl.io",
+                    name=display_name or f"TikTok User {tiktok_user_id[:8]}",
+                    linked_user_id=linked_user_id
+                )
+                
+                # Mettre à jour l'avatar si disponible
+                if avatar_url:
+                    user.picture_url = avatar_url
+                
+                # Vérifier si l'OAuthAccount TikTok existe déjà pour ce User
                 existing_oauth = db.query(OAuthAccount).filter(
+                    OAuthAccount.user_id == user.id,
                     OAuthAccount.provider == "tiktok",
                     OAuthAccount.provider_user_id == str(tiktok_user_id)
                 ).first()
                 
-                # Si l'OAuth account existe, récupérer le User associé
                 if existing_oauth:
-                    user = db.query(User).filter(User.id == existing_oauth.user_id).first()
                     # Mettre à jour les tokens
                     existing_oauth.access_token = access_token
                     if refresh_token:
                         existing_oauth.refresh_token = refresh_token
-                    if avatar_url:
-                        user.picture_url = avatar_url
                 else:
-                    # PRIORITÉ 1: Si user_id est passé dans le state, lier au User existant
-                    if linked_user_id:
-                        user = db.query(User).filter(User.id == linked_user_id).first()
-                        if not user:
-                            logger.warning(f"⚠️ User ID {linked_user_id} non trouvé, création d'un nouveau User")
-                            email = f"tiktok_{tiktok_user_id}@veyl.io"
-                            name = display_name or f"TikTok User {tiktok_user_id[:8]}"
-                            user = self.create_or_get_user(db, email=email, name=name)
-                        if avatar_url:
-                            user.picture_url = avatar_url
-                    else:
-                        # PRIORITÉ 2: Créer un nouveau User
-                        email = f"tiktok_{tiktok_user_id}@veyl.io"
-                        name = display_name or f"TikTok User {tiktok_user_id[:8]}"
-                        user = self.create_or_get_user(db, email=email, name=name)
-                        if avatar_url:
-                            user.picture_url = avatar_url
-                    
                     # Créer l'OAuthAccount TikTok
                     oauth_account = OAuthAccount(
                         user_id=user.id,
