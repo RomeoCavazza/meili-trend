@@ -192,8 +192,22 @@ async def tiktok_auth_callback(
         error_msg = f"TikTok OAuth Error: {error}"
         if error_type:
             error_msg += f" (type: {error_type})"
-        if error == "unauthorized_client":
-            error_msg += ". Vérifiez que le client_key et redirect_uri sont correctement configurés dans TikTok Developer Portal."
+        
+        # Messages d'aide spécifiques selon le type d'erreur
+        if error == "unauthorized_client" or "client_key" in error.lower():
+            error_msg += ")\n\n🔧 Solutions possibles:\n"
+            error_msg += "1. Vérifiez que TIKTOK_CLIENT_KEY est configuré dans Railway\n"
+            error_msg += "2. Vérifiez que le redirect_uri dans TikTok Developer Portal correspond EXACTEMENT à: " + settings.TIKTOK_REDIRECT_URI + "\n"
+            error_msg += "3. Vérifiez que l'application TikTok est approuvée/en production\n"
+            error_msg += "4. Vérifiez que le Client Key dans TikTok Portal correspond à TIKTOK_CLIENT_KEY"
+        elif error == "invalid_request":
+            error_msg += ")\n\n🔧 Vérifiez que tous les paramètres OAuth sont correctement configurés"
+        elif error == "access_denied":
+            error_msg += ")\n\n🔧 L'utilisateur a refusé l'autorisation"
+        else:
+            error_msg += ")"
+            
+        logger.error(f"❌ TikTok OAuth Error: {error} - {error_description or error_type}")
         return RedirectResponse(url=f"{frontend_url}?error={quote(error_msg)}&error_description={error_desc}")
     
     # Vérifier les paramètres requis

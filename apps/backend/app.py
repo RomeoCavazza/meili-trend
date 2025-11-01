@@ -166,19 +166,34 @@ def debug_tiktok_oauth():
     """Debug: voir l'URL OAuth TikTok générée et la configuration"""
     import os
     from auth_unified.oauth_service import OAuthService
+    from core.config import settings
     oauth_service = OAuthService()
     
     try:
         auth_data = oauth_service.start_tiktok_auth()
+        
+        # Récupérer les valeurs réelles des settings
+        client_key = settings.TIKTOK_CLIENT_KEY
+        client_secret = settings.TIKTOK_CLIENT_SECRET
+        redirect_uri = settings.TIKTOK_REDIRECT_URI
+        
         return {
             "status": "ok",
             "auth_url": auth_data["auth_url"],
             "state": auth_data["state"],
             "config": {
-                "has_client_key": bool(os.getenv("TIKTOK_CLIENT_KEY")),
-                "client_key_length": len(os.getenv("TIKTOK_CLIENT_KEY", "")),
-                "client_key_preview": os.getenv("TIKTOK_CLIENT_KEY", "")[:10] + "..." if os.getenv("TIKTOK_CLIENT_KEY") else None,
-                "redirect_uri": os.getenv("TIKTOK_REDIRECT_URI", "not_set")
+                "has_client_key": bool(client_key),
+                "client_key_length": len(client_key) if client_key else 0,
+                "client_key_preview": client_key[:10] + "..." if client_key and len(client_key) > 10 else (client_key if client_key else None),
+                "has_client_secret": bool(client_secret),
+                "client_secret_length": len(client_secret) if client_secret else 0,
+                "redirect_uri": redirect_uri,
+                "redirect_uri_matches": redirect_uri == "https://veyl.io/api/v1/auth/tiktok/callback" or redirect_uri == "https://insidr-production.up.railway.app/api/v1/auth/tiktok/callback"
+            },
+            "recommendations": {
+                "check_tiktok_portal": "Vérifier que le redirect_uri dans TikTok Developer Portal correspond EXACTEMENT à: " + redirect_uri,
+                "check_app_status": "Vérifier que l'application TikTok est approuvée/en production dans TikTok Developer Portal",
+                "check_client_key": "Vérifier que TIKTOK_CLIENT_KEY dans Railway correspond au Client Key dans TikTok Developer Portal"
             }
         }
     except Exception as e:
@@ -186,7 +201,13 @@ def debug_tiktok_oauth():
         return {
             "status": "error",
             "error": str(e),
-            "traceback": traceback.format_exc()
+            "error_type": type(e).__name__,
+            "traceback": traceback.format_exc(),
+            "config_check": {
+                "TIKTOK_CLIENT_KEY_set": bool(os.getenv("TIKTOK_CLIENT_KEY")),
+                "TIKTOK_CLIENT_SECRET_set": bool(os.getenv("TIKTOK_CLIENT_SECRET")),
+                "TIKTOK_REDIRECT_URI_set": bool(os.getenv("TIKTOK_REDIRECT_URI")),
+            }
         }
 
 @app.get("/api/v1/oauth/debug/google")

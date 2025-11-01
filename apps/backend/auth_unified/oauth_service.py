@@ -710,9 +710,20 @@ class OAuthService:
             "state": state
         }
         
+        # Validation supplémentaire
+        if len(client_key) < 10:
+            raise HTTPException(
+                status_code=500, 
+                detail=f"TIKTOK_CLIENT_KEY semble invalide (trop court: {len(client_key)} caractères). Vérifiez la configuration dans Railway."
+            )
+        
         logger.info(f"🔑 TikTok OAuth - Client Key: {client_key[:10]}... (longueur: {len(client_key) if client_key else 0})")
         logger.info(f"🔗 TikTok OAuth - Redirect URI: {redirect_uri}")
         logger.info(f"📋 TikTok OAuth - Scopes: {scopes}")
+        
+        # Avertissement si redirect_uri ne correspond pas à un format attendu
+        if not redirect_uri.startswith("https://"):
+            logger.warning(f"⚠️ TikTok OAuth - Redirect URI ne commence pas par https:// : {redirect_uri}")
         
         for key, value in params.items():
             # Pour redirect_uri, garder : et / non encodés
