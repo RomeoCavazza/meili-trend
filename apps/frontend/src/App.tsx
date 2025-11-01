@@ -11,15 +11,19 @@ import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
 import Search from "./pages/Search";
 import Analytics from "./pages/Analytics";
-import Watchlist from "./pages/Watchlist";
 import Watch from "./pages/Watch";
 import Profile from "./pages/Profile";
+import Community from "./pages/Community";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import DataDeletion from "./pages/DataDeletion";
 import Docs from "./pages/Docs";
 import Enterprise from "./pages/Enterprise";
 import NotFound from "./pages/NotFound";
+import Projects from "./pages/Projects";
+import ProjectsNew from "./pages/ProjectsNew";
+import ProjectDetail from "./pages/ProjectDetail";
+import CreatorDetail from "./pages/CreatorDetail";
 
 const queryClient = new QueryClient();
 
@@ -37,13 +41,19 @@ const App = () => (
               <Route path="/auth/callback" element={<AuthCallback />} />
               <Route path="/docs" element={<Docs />} />
               <Route path="/enterprise" element={<Enterprise />} />
-                    <Route path="/dashboard" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-                    <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
-                    <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-                    <Route path="/watchlist" element={<ProtectedRoute><Watchlist /></ProtectedRoute>} />
-                    <Route path="/watch" element={<ProtectedRoute><Watch /></ProtectedRoute>} />
-                    <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
-                    <Route path="/explore" element={<Search />} />
+              {/* Projects Routes */}
+              <Route path="/projects" element={<ProtectedRoute><Projects /></ProtectedRoute>} />
+              <Route path="/projects/new" element={<ProtectedRoute><ProjectsNew /></ProtectedRoute>} />
+              <Route path="/projects/:id/creator/:username" element={<ProtectedRoute><CreatorDetail /></ProtectedRoute>} />
+              <Route path="/projects/:id" element={<ProtectedRoute><ProjectDetail /></ProtectedRoute>} />
+              {/* Other Routes */}
+              <Route path="/dashboard" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+              <Route path="/search" element={<ProtectedRoute><Search /></ProtectedRoute>} />
+              <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+              <Route path="/watch" element={<ProtectedRoute><Watch /></ProtectedRoute>} />
+              <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+              <Route path="/community" element={<ProtectedRoute><Community /></ProtectedRoute>} />
+              <Route path="/explore" element={<Search />} />
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/terms" element={<Terms />} />
               <Route path="/data-deletion" element={<DataDeletion />} />

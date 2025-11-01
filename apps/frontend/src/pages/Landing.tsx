@@ -47,16 +47,16 @@ export default function Landing() {
           </div>
 
                  <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                   <Link to="/search">
+                   <Link to="/projects/new">
                      <Button size="lg" className="gradient-primary shadow-glow">
-                       <SearchIcon className="mr-2 h-5 w-5" />
-                       Start Searching
+                       <Sparkles className="mr-2 h-5 w-5" />
+                       Start a demo
                      </Button>
                    </Link>
-                   <Link to="/analytics">
+                   <Link to="/docs">
                      <Button size="lg" variant="outline">
-                       <TrendingUp className="mr-2 h-5 w-5" />
-                       View Analytics
+                       <FileText className="mr-2 h-5 w-5" />
+                       Documentation
                      </Button>
                    </Link>
                  </div>

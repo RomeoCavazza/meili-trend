@@ -19,12 +19,12 @@ export function Navbar() {
         // Navigation pour utilisateurs connectés
         const authenticatedNavItems = [
           { path: '/search', label: 'Search' },
-          { path: '/watchlist', label: 'Watchlist' },
-          { path: '/analytics', label: 'Analytics' },
+          { path: '/projects', label: 'Projects' },
+          { path: '/community', label: 'Community' },
         ];
 
   const isActive = (path: string) => location.pathname === path;
-  const isProfileActive = location.pathname === '/profile';
+  const isProfileActive = location.pathname === '/profile' || location.pathname === '/community';
 
   return (
     <>

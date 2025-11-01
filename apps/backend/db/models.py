@@ -141,3 +141,77 @@ class Subscription(Base):
     
     # Relations
     user = relationship("User")
+
+# =====================================================
+# 3. PROJETS - MONITORING DES TRENDS
+# =====================================================
+
+class Project(Base):
+    """Projets de monitoring de tendances"""
+    __tablename__ = "projects"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    name = Column(String(255), nullable=False)
+    description = Column(Text)  # Description du projet (remplace 'goal')
+    status = Column(String(50), default='draft')  # 'draft', 'active', 'archived', 'paused'
+    
+    # Configuration
+    platforms = Column(ArrayType)  # JSON: ['instagram', 'tiktok']
+    scope_type = Column(String(50))  # 'hashtags', 'creators', 'both'
+    scope_query = Column(Text)  # Query originale pour référence
+    
+    # Métriques cachées (pour performance)
+    creators_count = Column(Integer, default=0)
+    posts_count = Column(Integer, default=0)
+    signals_count = Column(Integer, default=0)
+    
+    # Exécution
+    last_run_at = Column(DateTime)  # Dernière ingestion
+    last_signal_at = Column(DateTime)  # Dernier signal détecté
+    
+    # Timestamps
+    created_at = Column(DateTime, default=dt.datetime.utcnow)
+    updated_at = Column(DateTime, default=dt.datetime.utcnow, onupdate=dt.datetime.utcnow)
+    
+    # Relations
+    user = relationship("User")
+    hashtags = relationship("Hashtag", secondary="project_hashtags", backref="projects")
+    creators = relationship("ProjectCreator", back_populates="project", cascade="all, delete-orphan")
+
+class ProjectHashtag(Base):
+    """Table de liaison projets ↔ hashtags (réutilise table hashtags existante)"""
+    __tablename__ = "project_hashtags"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
+    hashtag_id = Column(Integer, ForeignKey("hashtags.id", ondelete="CASCADE"), nullable=False)
+    added_at = Column(DateTime, default=dt.datetime.utcnow)
+    
+    # Relations
+    project = relationship("Project")
+    hashtag = relationship("Hashtag")
+    
+    # Contraintes
+    __table_args__ = (
+        UniqueConstraint('project_id', 'hashtag_id', name='uq_project_hashtag'),
+    )
+
+class ProjectCreator(Base):
+    """Créateurs suivis par projet"""
+    __tablename__ = "project_creators"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    project_id = Column(Integer, ForeignKey("projects.id", ondelete="CASCADE"), nullable=False)
+    creator_username = Column(String(255), nullable=False)  # "@username" ou "username"
+    platform_id = Column(Integer, ForeignKey("platforms.id"), nullable=False)
+    added_at = Column(DateTime, default=dt.datetime.utcnow)
+    
+    # Relations
+    project = relationship("Project", back_populates="creators")
+    platform = relationship("Platform")
+    
+    # Contraintes
+    __table_args__ = (
+        UniqueConstraint('project_id', 'platform_id', 'creator_username', name='uq_project_creator'),
+    )

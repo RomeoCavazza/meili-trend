@@ -22,6 +22,7 @@ from hashtags.hashtags_endpoints import hashtags_router
 from platforms.platforms_endpoints import platforms_router
 from analytics.analytics_endpoints import analytics_router
 from jobs.jobs_endpoints import jobs_router
+from projects.projects_endpoints import projects_router
 
 # Import Redis et rate limiting
 from core.redis_client import redis
@@ -70,6 +71,7 @@ app.include_router(hashtags_router)
 app.include_router(platforms_router)
 app.include_router(analytics_router)
 app.include_router(jobs_router)
+app.include_router(projects_router)
 from auth_unified.oauth_accounts_endpoints import oauth_accounts_router
 app.include_router(oauth_accounts_router)
 from webhooks.webhooks_endpoints import webhooks_router
@@ -337,6 +339,8 @@ async def startup_event():
     logger.info("🔄 Création des tables de base de données...")
     try:
         from db.base import Base, engine
+        # Importer tous les modèles pour qu'ils soient enregistrés dans Base.metadata
+        from db.models import User, OAuthAccount, Platform, Hashtag, Post, PostHashtag, Subscription, Project, ProjectHashtag, ProjectCreator
         Base.metadata.create_all(bind=engine)
         logger.info("✅ Tables de base de données créées/vérifiées")
     except Exception as e:
