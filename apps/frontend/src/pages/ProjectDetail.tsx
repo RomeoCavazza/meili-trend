@@ -35,9 +35,10 @@ export default function ProjectDetail() {
         }
 
         // Charger projet depuis API
-        const apiBase = getApiBase();
-        const url = apiBase ? `${apiBase}/api/v1/projects/${id}` : `/api/v1/projects/${id}`;
-        const response = await fetch(url, {
+        // Utiliser le proxy Vercel (chemin relatif)
+        const response = await fetch(`/api/v1/projects/${id}`, {
+          mode: 'cors',
+          credentials: 'same-origin',
           headers: {
             'Authorization': `Bearer ${token}`
           }

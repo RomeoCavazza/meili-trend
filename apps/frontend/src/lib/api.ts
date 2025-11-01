@@ -8,21 +8,15 @@ export const getApiBase = (): string => {
     return ''; // Proxy Vite redirige vers Railway
   }
   
-  // En production, appeler directement Railway en HTTPS
-  // Le proxy Vercel causait des problèmes (Railway redirige HTTP → HTTPS en 307)
-  // Appel direct HTTPS évite les redirections et fonctionne correctement avec CORS
-  const envUrl = import.meta.env.VITE_API_URL;
-  if (envUrl) {
-    // FORCER HTTPS - remplacer HTTP par HTTPS
-    const url = envUrl.startsWith('http://') 
-      ? envUrl.replace('http://', 'https://') 
-      : envUrl;
-    // S'assurer que ça commence bien par https://
-    return url.startsWith('https://') ? url : `https://${url}`;
-  }
+  // En production, TOUJOURS utiliser le proxy Vercel (vercel.json)
+  // Railway fait des redirections 307 au niveau infrastructure qu'on ne peut pas contrôler
+  // Le proxy Vercel évite les problèmes CORS/mixed content car :
+  // - Frontend → Vercel (même domaine HTTPS)
+  // - Vercel → Railway (proxy interne, pas de problème CORS)
+  // - Pas de redirection 307 visible par le navigateur
   
-  // URL par défaut en HTTPS (Railway)
-  return 'https://insidr-production.up.railway.app';
+  // TOUJOURS retourner '' pour forcer l'utilisation du proxy Vercel en production
+  return ''; // Proxy Vercel gère la redirection vers Railway
 };
 
 // Calculer API_BASE à chaque fois pour éviter les problèmes de cache
@@ -286,12 +280,12 @@ export async function getProjects(): Promise<Project[]> {
     }
   }
   
-  // Construire l'URL : chemin relatif en dev (proxy), URL complète en prod
-  const url = apiBase ? `${apiBase}/api/v1/projects` : '/api/v1/projects';
+  // Construire l'URL : toujours chemin relatif (proxy Vite en dev, proxy Vercel en prod)
+  const url = '/api/v1/projects';
   
   const response = await fetch(url, {
     mode: 'cors',
-    credentials: 'omit',
+    credentials: 'same-origin', // Utiliser same-origin pour le proxy Vercel
     headers: {
       'Authorization': `Bearer ${token || ''}`,
     },

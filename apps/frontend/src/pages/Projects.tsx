@@ -47,9 +47,10 @@ export default function Projects() {
         return;
       }
 
-      const apiBase = getApiBase();
-      const url = apiBase ? `${apiBase}/api/v1/projects` : '/api/v1/projects';
-      const response = await fetch(url, {
+      // Utiliser le proxy Vercel (chemin relatif)
+      const response = await fetch('/api/v1/projects', {
+        mode: 'cors',
+        credentials: 'same-origin',
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -166,10 +167,11 @@ export default function Projects() {
                             if (confirm(`Voulez-vous supprimer le projet "${project.name}" ?`)) {
                               try {
                                 const token = localStorage.getItem('token');
-                                const apiBase = getApiBase();
-                                const url = apiBase ? `${apiBase}/api/v1/projects/${project.id}` : `/api/v1/projects/${project.id}`;
-                                const response = await fetch(url, {
+                                // Utiliser le proxy Vercel (chemin relatif)
+                                const response = await fetch(`/api/v1/projects/${project.id}`, {
                                   method: 'DELETE',
+                                  mode: 'cors',
+                                  credentials: 'same-origin',
                                   headers: {
                                     'Authorization': `Bearer ${token}`
                                   }
