@@ -176,6 +176,8 @@ Technologies prévues pour montée en charge (activées via feature flags, uniqu
 
 ## Configuration & Environnement
 
+**Note technique**: FastAPI est configuré avec `redirect_slashes=False` pour éviter les redirections 307 qui exposent des URLs HTTP lors du proxy Vercel. Les routes utilisent des chaînes vides (`""`) au lieu de `"/"` pour correspondre exactement aux URLs sans slash final (`/api/v1/projects`).
+
 ### Variables Backend Requises
 
 ```bash
