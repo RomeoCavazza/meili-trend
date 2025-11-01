@@ -31,7 +31,11 @@ from core.ratelimit import setup_rate_limit, limiter
 app = FastAPI(
     title="Insider Trends API",
     version="2.0.0",
-    description="API refactorisée pour l'analyse des tendances - SÉCURISÉE"
+    description="API refactorisée pour l'analyse des tendances - SÉCURISÉE",
+    # Configuration pour Railway proxy
+    # root_path est utilisé quand l'app est derrière un proxy (Railway, nginx, etc.)
+    # Railway ajoute automatiquement les headers X-Forwarded-*
+    root_path="",  # Laisser vide pour Railway (pas de sous-chemin)
 )
 
 # Configuration du rate limiting avec Redis
