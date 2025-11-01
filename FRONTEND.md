@@ -1,6 +1,6 @@
 # Frontend Status - veyl.io
 
-**Dernière mise à jour**: Janvier 2025  
+**Dernière mise à jour**: Novembre 2024  
 **Objectif**: État des lieux frontend, pages implémentées, routing, composants
 
 ---

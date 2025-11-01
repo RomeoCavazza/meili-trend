@@ -1,6 +1,6 @@
 # Architecture & Vision - veyl.io
 
-**Dernière mise à jour**: Janvier 2025
+**Dernière mise à jour**: Novembre 2024
 
 ---
 

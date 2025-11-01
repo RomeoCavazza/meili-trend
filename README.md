@@ -52,7 +52,8 @@ npm run dev
 
 ### Infrastructure
 - **Railway** - Hébergement backend (auto-deploy)
-- **Vercel** - Hébergement frontend (auto-deploy)
+- **Vercel** - Hébergement frontend (auto-deploy) avec proxy vers Railway
+- **Configuration**: URLs API sans slash final (`/api/v1/projects`) pour éviter les redirections Vercel
 
 ---
 
