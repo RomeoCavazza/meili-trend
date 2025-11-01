@@ -43,9 +43,10 @@ export default function Profile() {
   const fetchConnectedAccounts = async () => {
     try {
       const token = localStorage.getItem('token');
-      const apiBase = getApiBase();
-      const url = apiBase ? `${apiBase}/api/v1/auth/accounts/connected` : '/api/v1/auth/accounts/connected';
-      const response = await fetch(url, {
+      // Utiliser le proxy Vercel (chemin relatif)
+      const response = await fetch('/api/v1/auth/accounts/connected', {
+        mode: 'cors',
+        credentials: 'same-origin',
         headers: {
           'Authorization': `Bearer ${token}`
         }

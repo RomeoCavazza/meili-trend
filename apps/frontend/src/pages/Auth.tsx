@@ -56,23 +56,21 @@ export default function Auth() {
   };
 
   const handleGoogleSignIn = () => {
-    const apiBase = getApiBase();
-    window.location.href = `${apiBase}/api/v1/auth/google/start`;
+    // Pour OAuth, utiliser le proxy Vercel (chemin relatif)
+    // Le proxy Vercel redirige vers Railway
+    window.location.href = '/api/v1/auth/google/start';
   };
 
   const handleInstagramSignIn = () => {
-    const apiBase = getApiBase();
-    window.location.href = `${apiBase}/api/v1/auth/instagram/start`;
+    window.location.href = '/api/v1/auth/instagram/start';
   };
 
   const handleFacebookSignIn = () => {
-    const apiBase = getApiBase();
-    window.location.href = `${apiBase}/api/v1/auth/facebook/start`;
+    window.location.href = '/api/v1/auth/facebook/start';
   };
 
   const handleTikTokSignIn = () => {
-    const apiBase = getApiBase();
-    window.location.href = `${apiBase}/api/v1/auth/tiktok/start`;
+    window.location.href = '/api/v1/auth/tiktok/start';
   };
 
   return (
