@@ -176,7 +176,7 @@ class Project(Base):
     
     # Relations
     user = relationship("User")
-    hashtags = relationship("Hashtag", secondary="project_hashtags", backref="projects")
+    hashtags = relationship("Hashtag", secondary="project_hashtags", backref="projects", overlaps="project,hashtag")
     creators = relationship("ProjectCreator", back_populates="project", cascade="all, delete-orphan")
 
 class ProjectHashtag(Base):
@@ -188,9 +188,9 @@ class ProjectHashtag(Base):
     hashtag_id = Column(Integer, ForeignKey("hashtags.id", ondelete="CASCADE"), nullable=False)
     added_at = Column(DateTime, default=dt.datetime.utcnow)
     
-    # Relations
-    project = relationship("Project")
-    hashtag = relationship("Hashtag")
+    # Relations avec overlaps pour éviter les warnings SQLAlchemy
+    project = relationship("Project", overlaps="hashtags,projects")
+    hashtag = relationship("Hashtag", overlaps="projects,hashtags")
     
     # Contraintes
     __table_args__ = (

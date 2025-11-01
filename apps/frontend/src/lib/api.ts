@@ -1,7 +1,21 @@
 // src/lib/api.ts - API client pour Lovable
 // En dev : utiliser le proxy Vite (vite.config.ts) qui redirige vers Railway
 // En prod : utiliser VITE_API_URL si défini, sinon Railway
-const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'https://insidr-production.up.railway.app');
+// Force HTTPS pour éviter les erreurs mixed content
+const getApiBase = () => {
+  const envUrl = import.meta.env.VITE_API_URL;
+  if (envUrl) {
+    // S'assurer que l'URL utilise HTTPS en production
+    return envUrl.startsWith('http://') && !import.meta.env.DEV 
+      ? envUrl.replace('http://', 'https://') 
+      : envUrl;
+  }
+  return import.meta.env.DEV 
+    ? '' // Utilise le proxy Vite en dev
+    : 'https://insidr-production.up.railway.app';
+};
+
+const API_BASE = getApiBase();
 
 // Debug: log API_BASE pour vérifier la configuration
 if (import.meta.env.DEV) {

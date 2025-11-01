@@ -25,7 +25,17 @@ export default function Profile() {
   const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'https://insidr-production.up.railway.app');
+  // Force HTTPS pour éviter mixed content
+  const getApiBase = () => {
+    const envUrl = import.meta.env.VITE_API_URL;
+    if (envUrl) {
+      return envUrl.startsWith('http://') && !import.meta.env.DEV 
+        ? envUrl.replace('http://', 'https://') 
+        : envUrl;
+    }
+    return import.meta.env.DEV ? '' : 'https://insidr-production.up.railway.app';
+  };
+  const API_BASE = getApiBase();
 
   useEffect(() => {
     fetchConnectedAccounts();
