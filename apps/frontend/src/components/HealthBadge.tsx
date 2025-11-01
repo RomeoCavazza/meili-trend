@@ -6,11 +6,31 @@ export function HealthBadge() {
   const [status, setStatus] = useState<'checking' | 'healthy' | 'down'>('checking');
 
   useEffect(() => {
-    const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? '' : 'https://insidr-production.up.railway.app');
+    // Utiliser getApiBase pour forcer HTTPS
+    const getApiBase = (): string => {
+      if (import.meta.env.DEV) {
+        return '';
+      }
+      const envUrl = import.meta.env.VITE_API_URL;
+      if (envUrl) {
+        const url = envUrl.startsWith('http://') 
+          ? envUrl.replace('http://', 'https://') 
+          : envUrl;
+        return url.startsWith('https://') ? url : `https://${url}`;
+      }
+      return 'https://insidr-production.up.railway.app';
+    };
+    
+    const apiBase = getApiBase();
     
     const checkHealth = async () => {
       try {
-        const response = await fetch(`${API_BASE}/api/healthz`);
+        const url = `${apiBase}/api/healthz`;
+        // S'assurer que l'URL est en HTTPS en production
+        const finalUrl = !import.meta.env.DEV && !url.startsWith('https://')
+          ? url.replace('http://', 'https://')
+          : url;
+        const response = await fetch(finalUrl, { mode: 'cors', credentials: 'omit' });
         setStatus(response.ok ? 'healthy' : 'down');
       } catch {
         setStatus('down');

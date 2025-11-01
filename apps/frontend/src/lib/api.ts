@@ -200,19 +200,38 @@ export interface Project {
 export async function createProject(project: ProjectCreate): Promise<Project> {
   const token = localStorage.getItem('token');
   // Recalculer API_BASE à chaque fois pour éviter les problèmes de cache
-  const apiBase = getApiBase();
+  let apiBase = getApiBase();
+  
+  // FORCER HTTPS en production - éviter toute redirection HTTP → HTTPS
+  if (!import.meta.env.DEV) {
+    // Remplacer HTTP par HTTPS si jamais détecté
+    if (apiBase.startsWith('http://')) {
+      console.warn('⚠️ HTTP détecté, remplacement par HTTPS');
+      apiBase = apiBase.replace('http://', 'https://');
+    }
+    // S'assurer que ça commence par https://
+    if (!apiBase.startsWith('https://')) {
+      console.warn('⚠️ URL non-HTTPS, ajout du préfixe https://');
+      apiBase = `https://${apiBase}`;
+    }
+  }
+  
   const url = `${apiBase}/api/v1/projects`;
   console.log('API: Creating project at:', url);
   console.log('API: API_BASE:', apiBase);
+  console.log('API: URL starts with https:', url.startsWith('https://'));
   console.log('API: Request body:', JSON.stringify(project, null, 2));
   
-  // S'assurer que l'URL est en HTTPS
-  if (!url.startsWith('https://') && !import.meta.env.DEV) {
-    console.error('❌ URL non-HTTPS détectée:', url);
-    throw new Error('API URL must use HTTPS in production');
+  // Vérification finale stricte
+  if (!import.meta.env.DEV && !url.startsWith('https://')) {
+    const error = `❌ URL non-HTTPS finale détectée: ${url}. API_BASE était: ${apiBase}`;
+    console.error(error);
+    throw new Error('API URL must use HTTPS in production. ' + error);
   }
   
   const response = await fetch(url, {
+    mode: 'cors', // Explicitement demander CORS
+    credentials: 'omit', // Ne pas envoyer de cookies pour éviter les problèmes
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -243,16 +262,29 @@ export async function createProject(project: ProjectCreate): Promise<Project> {
 export async function getProjects(): Promise<Project[]> {
   const token = localStorage.getItem('token');
   // Recalculer API_BASE à chaque fois
-  const apiBase = getApiBase();
+  let apiBase = getApiBase();
+  
+  // FORCER HTTPS en production
+  if (!import.meta.env.DEV) {
+    if (apiBase.startsWith('http://')) {
+      apiBase = apiBase.replace('http://', 'https://');
+    }
+    if (!apiBase.startsWith('https://')) {
+      apiBase = `https://${apiBase}`;
+    }
+  }
+  
   const url = `${apiBase}/api/v1/projects`;
   
-  // S'assurer que l'URL est en HTTPS
-  if (!url.startsWith('https://') && !import.meta.env.DEV) {
+  // Vérification finale stricte
+  if (!import.meta.env.DEV && !url.startsWith('https://')) {
     console.error('❌ URL non-HTTPS détectée:', url);
     throw new Error('API URL must use HTTPS in production');
   }
   
   const response = await fetch(url, {
+    mode: 'cors',
+    credentials: 'omit',
     headers: {
       'Authorization': `Bearer ${token || ''}`,
     },
