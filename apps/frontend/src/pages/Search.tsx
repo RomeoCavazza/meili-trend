@@ -1,10 +1,9 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Search as SearchIcon, TrendingUp, Heart, MessageCircle, ExternalLink, Code2, Copy, CheckCircle2, Sparkles, Users2, FileBarChart, TrendingUpDown, FileText } from 'lucide-react';
+import { Search as SearchIcon, TrendingUp, Heart, MessageCircle, ExternalLink, Code2, Copy, CheckCircle2 } from 'lucide-react';
 import { generateMockPosts, type InstagramPost } from '@/lib/mockData';
 import { searchPosts, type PostHit, type SearchParams } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -24,29 +23,6 @@ export default function Search() {
   const [embedCopied, setEmbedCopied] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const { toast } = useToast();
-
-  const features = [
-    {
-      icon: Sparkles,
-      title: 'Advanced Search',
-      description: 'Discover trends with powerful filters.',
-    },
-    {
-      icon: Users2,
-      title: 'Creator Intelligence',
-      description: 'Analyze influencer performance and partnerships.',
-    },
-    {
-      icon: FileBarChart,
-      title: 'Reports Generation',
-      description: 'Generate professional reports with insights.',
-    },
-    {
-      icon: TrendingUpDown,
-      title: 'Real-time Analytics',
-      description: 'Track engagement and growth trends.',
-    },
-  ];
 
   const handleSearch = async (query: string, platforms: string[] = []) => {
     if (!query.trim()) return;
@@ -245,31 +221,6 @@ export default function Search() {
           )}
         </section>
       )}
-
-      {/* Features Section */}
-      <section id="features" className="container py-24">
-        <div className="max-w-5xl mx-auto">
-          <div className="grid md:grid-cols-2 gap-8 mb-8">
-            {features.map((feature, index) => (
-              <div key={index} className="flex flex-col items-center text-center space-y-4 p-8 rounded-2xl bg-card/50 border border-border/50">
-                <feature.icon className="h-12 w-12 text-primary" />
-                <h3 className="text-xl font-semibold">{feature.title}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {feature.description}
-                </p>
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-center">
-            <Link to="/docs">
-              <Button variant="outline" size="lg" className="rounded-xl">
-                <FileText className="h-4 w-4 mr-2" />
-                Documentation
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </section>
 
       {/* Meta oEmbed Read Dialog */}
       <Dialog open={embedDialogOpen} onOpenChange={setEmbedDialogOpen}>
