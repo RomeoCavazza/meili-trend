@@ -1,21 +1,21 @@
 // src/lib/api.ts - API client pour Lovable
 // En dev : utiliser le proxy Vite (vite.config.ts) qui redirige vers Railway
-// En prod : utiliser VITE_API_URL si défini, sinon Railway
-// Force HTTPS pour éviter les erreurs mixed content
+// En prod : utiliser VITE_API_URL si défini, sinon proxy Vercel
 export const getApiBase = (): string => {
   // En développement, utiliser le proxy Vite
   if (import.meta.env.DEV) {
     return ''; // Proxy Vite redirige vers Railway
   }
   
-  // En production, TOUJOURS utiliser le proxy Vercel (vercel.json)
-  // Railway fait des redirections 307 au niveau infrastructure qu'on ne peut pas contrôler
-  // Le proxy Vercel évite les problèmes CORS/mixed content car :
-  // - Frontend → Vercel (même domaine HTTPS)
-  // - Vercel → Railway (proxy interne, pas de problème CORS)
-  // - Pas de redirection 307 visible par le navigateur
+  // En production, utiliser VITE_API_URL si défini (pour tests directs Railway)
+  // Sinon, utiliser le proxy Vercel
+  const apiUrl = import.meta.env.VITE_API_URL;
+  if (apiUrl) {
+    // URL absolue fournie (Railway direct) - utiliser telle quelle
+    return apiUrl.endsWith('/') ? apiUrl.slice(0, -1) : apiUrl;
+  }
   
-  // TOUJOURS retourner '' pour forcer l'utilisation du proxy Vercel en production
+  // Sinon, utiliser le proxy Vercel (chemin relatif)
   return ''; // Proxy Vercel gère la redirection vers Railway
 };
 
@@ -201,10 +201,11 @@ export interface Project {
 export async function createProject(project: ProjectCreate): Promise<Project> {
   const token = localStorage.getItem('token');
   
-  // TOUJOURS utiliser le chemin relatif (proxy Vite en dev, proxy Vercel en prod)
-  // Le proxy Vercel évite les redirections 307 de Railway
-  // IMPORTANT: SANS slash final pour éviter les redirections Vercel
-  const url = '/api/v1/projects';
+  // Utiliser getApiBase() pour déterminer l'URL de base
+  // En dev : proxy Vite (''), en prod : VITE_API_URL ou proxy Vercel ('')
+  const apiBase = getApiBase();
+  // IMPORTANT: Utiliser '/' (slash) pour la route, FastAPI gère les deux versions
+  const url = apiBase ? `${apiBase}/api/v1/projects` : '/api/v1/projects';
   
   console.log('API: Creating project at:', url);
   console.log('API: Using proxy:', import.meta.env.DEV ? 'Vite' : 'Vercel');
@@ -246,9 +247,9 @@ export async function createProject(project: ProjectCreate): Promise<Project> {
 export async function getProjects(): Promise<Project[]> {
   const token = localStorage.getItem('token');
   
-  // TOUJOURS utiliser le chemin relatif (proxy Vite en dev, proxy Vercel en prod)
-  // IMPORTANT: SANS slash final pour éviter les problèmes Vercel
-  const url = '/api/v1/projects';
+  // Utiliser getApiBase() pour déterminer l'URL de base
+  const apiBase = getApiBase();
+  const url = apiBase ? `${apiBase}/api/v1/projects` : '/api/v1/projects';
   
   const response = await fetch(url, {
     mode: 'cors',
