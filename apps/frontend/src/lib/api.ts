@@ -90,7 +90,7 @@ export async function searchPosts(params: SearchParams): Promise<SearchResponse>
   });
 
   const apiBase = getApiBase();
-  const url = `${apiBase}/api/v1/posts/search?${searchParams.toString()}`;
+  const url = apiBase ? `${apiBase}/api/v1/posts/search?${searchParams.toString()}` : `/api/v1/posts/search?${searchParams.toString()}`;
   
   const response = await fetch(url, {
     headers: {
@@ -110,7 +110,8 @@ export async function searchPosts(params: SearchParams): Promise<SearchResponse>
 
 export async function searchHashtags(q: string, platform: string = 'instagram'): Promise<any[]> {
   const apiBase = getApiBase();
-  const response = await fetch(`${apiBase}/v1/search/hashtags?q=${q}&platform=${platform}`, {
+  const url = apiBase ? `${apiBase}/v1/search/hashtags?q=${q}&platform=${platform}` : `/v1/search/hashtags?q=${q}&platform=${platform}`;
+  const response = await fetch(url, {
     headers: {
       'Authorization': `Bearer ${localStorage.getItem('token') || ''}`,
     }
@@ -125,14 +126,16 @@ export async function searchHashtags(q: string, platform: string = 'instagram'):
 
 export async function checkHealth(): Promise<{ status: string }> {
   const apiBase = getApiBase();
-  const response = await fetch(`${apiBase}/healthz`);
+  const url = apiBase ? `${apiBase}/healthz` : '/healthz';
+  const response = await fetch(url);
   return response.json();
 }
 
 // Nouvelles fonctions d'authentification
 export async function login(email: string, password: string) {
   const apiBase = getApiBase();
-  const response = await fetch(`${apiBase}/api/v1/auth/login`, {
+  const url = apiBase ? `${apiBase}/api/v1/auth/login` : '/api/v1/auth/login';
+  const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password })
@@ -147,7 +150,8 @@ export async function login(email: string, password: string) {
 
 export async function register(email: string, password: string, name?: string) {
   const apiBase = getApiBase();
-  const response = await fetch(`${apiBase}/api/v1/auth/register`, {
+  const url = apiBase ? `${apiBase}/api/v1/auth/register` : '/api/v1/auth/register';
+  const response = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email, password, name })
@@ -162,7 +166,8 @@ export async function register(email: string, password: string, name?: string) {
 
 export async function getMe(token: string) {
   const apiBase = getApiBase();
-  const response = await fetch(`${apiBase}/api/v1/auth/me`, {
+  const url = apiBase ? `${apiBase}/api/v1/auth/me` : '/api/v1/auth/me';
+  const response = await fetch(url, {
     headers: { 'Authorization': `Bearer ${token}` }
   });
   
@@ -209,32 +214,29 @@ export async function createProject(project: ProjectCreate): Promise<Project> {
   // Recalculer API_BASE à chaque fois pour éviter les problèmes de cache
   let apiBase = getApiBase();
   
-  // FORCER HTTPS en production - éviter toute redirection HTTP → HTTPS
-  if (!import.meta.env.DEV) {
-    // Remplacer HTTP par HTTPS si jamais détecté
-    if (apiBase.startsWith('http://')) {
-      console.warn('⚠️ HTTP détecté, remplacement par HTTPS');
-      apiBase = apiBase.replace('http://', 'https://');
-    }
-    // S'assurer que ça commence par https://
-    if (!apiBase.startsWith('https://')) {
-      console.warn('⚠️ URL non-HTTPS, ajout du préfixe https://');
-      apiBase = `https://${apiBase}`;
+  // Si apiBase est vide (proxy relatif), ne pas ajouter https://
+  // Sinon, forcer HTTPS en production
+  if (apiBase) {
+    if (!import.meta.env.DEV) {
+      // Remplacer HTTP par HTTPS si jamais détecté
+      if (apiBase.startsWith('http://')) {
+        console.warn('⚠️ HTTP détecté, remplacement par HTTPS');
+        apiBase = apiBase.replace('http://', 'https://');
+      }
+      // S'assurer que ça commence par https:// (seulement si apiBase n'est pas vide)
+      if (apiBase && !apiBase.startsWith('https://') && !apiBase.startsWith('http://')) {
+        console.warn('⚠️ URL non-HTTPS, ajout du préfixe https://');
+        apiBase = `https://${apiBase}`;
+      }
     }
   }
   
-  const url = `${apiBase}/api/v1/projects`;
+  // Construire l'URL correctement : si apiBase est vide, utiliser un chemin relatif
+  const url = apiBase ? `${apiBase}/api/v1/projects` : '/api/v1/projects';
   console.log('API: Creating project at:', url);
-  console.log('API: API_BASE:', apiBase);
-  console.log('API: URL starts with https:', url.startsWith('https://'));
+  console.log('API: API_BASE:', apiBase || '(using relative proxy)');
+  console.log('API: URL:', url);
   console.log('API: Request body:', JSON.stringify(project, null, 2));
-  
-  // Vérification finale stricte
-  if (!import.meta.env.DEV && !url.startsWith('https://')) {
-    const error = `❌ URL non-HTTPS finale détectée: ${url}. API_BASE était: ${apiBase}`;
-    console.error(error);
-    throw new Error('API URL must use HTTPS in production. ' + error);
-  }
   
   const response = await fetch(url, {
     mode: 'cors', // Explicitement demander CORS
@@ -271,23 +273,19 @@ export async function getProjects(): Promise<Project[]> {
   // Recalculer API_BASE à chaque fois
   let apiBase = getApiBase();
   
-  // FORCER HTTPS en production
-  if (!import.meta.env.DEV) {
+  // Si apiBase est vide (proxy relatif), ne pas modifier
+  // Sinon, forcer HTTPS en production
+  if (apiBase && !import.meta.env.DEV) {
     if (apiBase.startsWith('http://')) {
       apiBase = apiBase.replace('http://', 'https://');
     }
-    if (!apiBase.startsWith('https://')) {
+    if (!apiBase.startsWith('https://') && !apiBase.startsWith('http://')) {
       apiBase = `https://${apiBase}`;
     }
   }
   
-  const url = `${apiBase}/api/v1/projects`;
-  
-  // Vérification finale stricte
-  if (!import.meta.env.DEV && !url.startsWith('https://')) {
-    console.error('❌ URL non-HTTPS détectée:', url);
-    throw new Error('API URL must use HTTPS in production');
-  }
+  // Construire l'URL correctement : si apiBase est vide, utiliser un chemin relatif
+  const url = apiBase ? `${apiBase}/api/v1/projects` : '/api/v1/projects';
   
   const response = await fetch(url, {
     mode: 'cors',
